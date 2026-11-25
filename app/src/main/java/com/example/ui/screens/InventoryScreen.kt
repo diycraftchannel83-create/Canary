@@ -45,7 +45,8 @@ fun InventoryScreen(data: AviaryDashboardData, isBusy: Boolean, onUpdateMetadata
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Inventaris Burung", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)\n                Button(onClick = { showAddDialog = true }) { Text("Tambah") }\n            }
+                Text("Inventaris Burung", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Button(onClick = { showAddDialog = true }) { Text("Tambah") }\n            }
             Text("Kelola burung aviary, status kesiapan, asal, kepemilikan, dan pedigree.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 InventoryMetric("Total", data.canaries.size.toString(), Modifier.weight(1f))
@@ -79,7 +80,8 @@ fun InventoryScreen(data: AviaryDashboardData, isBusy: Boolean, onUpdateMetadata
         }
     }
     if (showAddDialog) {
-        AddInventoryBirdDialog(busy = isBusy, onDismiss = { showAddDialog = false }, onCreate = { ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, notes ->\n            onCreateBird(ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, notes)\n            showAddDialog = false\n        })\n    }\n    editBird?.let { bird ->
+        AddInventoryBirdDialog(busy = isBusy, onDismiss = { showAddDialog = false }, onCreate = { ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, notes ->
+            onCreateBird(ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, notes)\n            showAddDialog = false\n        })\n    }\n    editBird?.let { bird ->
         InventoryEditDialog(bird = bird, busy = isBusy, onDismiss = { editBird = null }, onSave = { status, ownership, source, dateMs, owner, price, confidence, notes ->
             onUpdateMetadata(bird, status, ownership, source, dateMs, owner, price, confidence, notes)
             editBird = null
