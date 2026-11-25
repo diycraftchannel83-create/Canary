@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isFarmMember(aviaryId) {
+      return request.auth != null &&
+        firestore.get(/databases/(default)/documents/aviaries/$(aviaryId)).data.memberUids.hasAny([request.auth.uid]);
+    }
+
+    match /aviaries/{aviaryId}/farm_logo/{fileName} {
+      allow read: if isFarmMember(aviaryId);
+      allow write: if isFarmMember(aviaryId) &&
+        fileName == 'logo' &&
+        request.resource != null &&
+        request.resource.size <= 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+      allow delete: if isFarmMember(aviaryId);
+    }
+  }
+}
