@@ -1,6 +1,7 @@
 package com.example.data.repository
 
 import android.content.Context
+import android.net.Uri
 import com.example.R
 import com.example.data.firebase.OperationType
 import com.example.data.firebase.handleFirestoreError
@@ -24,6 +25,8 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.firestore.snapshots
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -775,6 +778,71 @@ class BreedingRepository(
             db.document(docPath).update(
                 mapOf(
                     "name" to newName.trim().take(60),
+                    "updatedAt" to FieldValue.serverTimestamp()
+                )
+            ).await()
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            handleFirestoreError(e, OperationType.UPDATE, docPath)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun uploadFarmLogo(aviaryId: String, imageUri: Uri): Result<String> {
+        val docPath = "aviaries/$aviaryId"
+        return try {
+            val uid = requireUserId()
+            val aviaryRef = db.collection("aviaries").document(aviaryId)
+            val aviarySnapshot = aviaryRef.get().await()
+            val members = (aviarySnapshot.get("memberUids") as? List<*>)?.filterIsInstance<String>().orEmpty()
+            require(aviarySnapshot.exists() && uid in members) {
+                "Anda bukan anggota farm ini."
+            }
+            val storageRef = FirebaseStorage.getInstance().reference
+                .child("aviaries/$aviaryId/farm_logo/logo")
+            val metadata = StorageMetadata.Builder()
+                .setContentType("image/*")
+                .build()
+            storageRef.putFile(imageUri, metadata).await()
+            val downloadUrl = storageRef.downloadUrl.await().toString()
+            try {
+                aviaryRef.update(
+                    mapOf(
+                        "farmLogoUrl" to downloadUrl,
+                        "updatedAt" to FieldValue.serverTimestamp()
+                    )
+                ).await()
+            } catch (e: Exception) {
+                try { storageRef.delete().await() } catch (_: Exception) {}
+                throw e
+            }
+            Result.success(downloadUrl)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            handleFirestoreError(e, OperationType.UPDATE, docPath)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteFarmLogo(aviaryId: String): Result<Unit> {
+        val docPath = "aviaries/$aviaryId"
+        return try {
+            val uid = requireUserId()
+            val aviaryRef = db.collection("aviaries").document(aviaryId)
+            val aviarySnapshot = aviaryRef.get().await()
+            val members = (aviarySnapshot.get("memberUids") as? List<*>)?.filterIsInstance<String>().orEmpty()
+            require(aviarySnapshot.exists() && uid in members) {
+                "Anda bukan anggota farm ini."
+            }
+            val storageRef = FirebaseStorage.getInstance().reference
+                .child("aviaries/$aviaryId/farm_logo/logo")
+            try { storageRef.delete().await() } catch (_: Exception) { /* tolerate missing logo object */ }
+            aviaryRef.update(
+                mapOf(
+                    "farmLogoUrl" to "",
                     "updatedAt" to FieldValue.serverTimestamp()
                 )
             ).await()
