@@ -464,6 +464,8 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                                                     recordedFledgedCount = recordedFledgedCount,
                                                     productionHistoryNotes = productionHistoryNotes,
                                                     newPhotoBase64 = newPhotoBase64,
+                                                    externalSirePhotoBase64 = externalSirePhotoBase64,
+                                                    externalDamPhotoBase64 = externalDamPhotoBase64,
                                                     onDone = onDone
                                                 )
                                             },
