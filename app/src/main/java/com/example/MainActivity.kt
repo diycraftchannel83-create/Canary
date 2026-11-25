@@ -473,7 +473,9 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                                         )
                                     }
 
-                                    composable(AppTab.INVENTORY.route) {\n                                        InventoryScreen(data = data)\n                                    }\n\n                                    composable(AppTab.BREEDING.route) {
+                                    composable(AppTab.INVENTORY.route) {\n                                        InventoryScreen(data = data, isBusy = isBusy, onUpdateMetadata = { bird, status, ownership, source, acquiredMs, owner, price, confidence, pedigreeNotes ->
+                                            activeAviary?.let { av -> viewModel.updateInventoryMetadata(av.id, bird.id, status.name, ownership.name, source.name, acquiredMs, owner, price, confidence, pedigreeNotes) }
+                                        })\n                                    }\n\n                                    composable(AppTab.BREEDING.route) {
                                         BreedingScreen(
                                             data = data,
                                             isBusy = isBusy,
