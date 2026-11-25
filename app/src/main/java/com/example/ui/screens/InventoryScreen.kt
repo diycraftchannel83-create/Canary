@@ -76,7 +76,7 @@ fun InventoryScreen(data: AviaryDashboardData, isBusy: Boolean, onUpdateMetadata
             }
         } else {
             LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(birds, key = { it.id }) { bird -> InventoryBirdCard(bird, onEdit = { editBird = bird }) }
+                items(items = birds, key = { it.id }) { bird -> InventoryBirdCard(bird, onEdit = { editBird = bird }) }
             }
         }
     }
