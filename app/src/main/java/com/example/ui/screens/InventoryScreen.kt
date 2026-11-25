@@ -75,7 +75,7 @@ fun InventoryScreen(data: AviaryDashboardData, isBusy: Boolean, onUpdateMetadata
                 Text(if (data.canaries.isEmpty()) "Belum ada burung terdaftar. Tambahkan data melalui menu Silsilah." else "Tidak ada data yang cocok dengan filter.")
             }
         } else {
-            LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            LazyColumn(contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(items = birds, key = { it.id }) { bird -> InventoryBirdCard(bird, onEdit = { editBird = bird }) }
             }
         }
