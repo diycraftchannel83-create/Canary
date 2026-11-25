@@ -94,6 +94,55 @@ fun InventoryScreen(data: AviaryDashboardData, isBusy: Boolean, onUpdateMetadata
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddInventoryBirdDialog(busy: Boolean, onDismiss: () -> Unit, onCreate: (String, String, CanarySex, String, String, Long, String, InventoryStatus, OwnershipStatus, OwnershipSource, Long, String, Long, String, String, String, String, String) -> Unit) {
+    var ring by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+    var sex by remember { mutableStateOf(CanarySex.MALE) }
+    var breed by remember { mutableStateOf("") }
+    var color by remember { mutableStateOf("") }
+    var hatch by remember { mutableStateOf("") }
+    var cage by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf(InventoryStatus.GROWER) }
+    var ownership by remember { mutableStateOf(OwnershipStatus.OWNED) }
+    var source by remember { mutableStateOf(OwnershipSource.PURCHASE) }
+    var acquired by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
+    var owner by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
+    var confidence by remember { mutableStateOf("PARTIAL") }
+    var sireRing by remember { mutableStateOf("") }
+    var damRing by remember { mutableStateOf("") }
+    var lineage by remember { mutableStateOf("") }
+    var docs by remember { mutableStateOf("") }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Tambah Burung Inventaris") }, text = {
+        Column(Modifier.fillMaxWidth().heightIn(max=600.dp).verticalScroll(rememberScrollState()), verticalArrangement=Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(ring,{ring=it},label={Text("Kode Ring *")},singleLine=true)
+            OutlinedTextField(name,{name=it},label={Text("Nama (opsional)")},singleLine=true)
+            Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) { CanarySex.entries.forEach { FilterChip(selected=sex==it,onClick={sex=it},label={Text(it.labelId)}) } }
+            OutlinedTextField(breed,{breed=it},label={Text("Strain/Ras *")},singleLine=true)
+            OutlinedTextField(color,{color=it},label={Text("Warna bulu")},singleLine=true)
+            OutlinedTextField(hatch,{hatch=it},label={Text("Tanggal menetas (YYYY-MM-DD)")},singleLine=true)
+            OutlinedTextField(cage,{cage=it},label={Text("Kode kandang")},singleLine=true)
+            InventoryDropdown("Status kesiapan",status.labelId,InventoryStatus.entries.map{it.labelId},{status=InventoryStatus.entries[it]})
+            InventoryDropdown("Kepemilikan",ownership.labelId,OwnershipStatus.entries.map{it.labelId},{ownership=OwnershipStatus.entries[it]})
+            InventoryDropdown("Asal burung",source.labelId,OwnershipSource.entries.map{it.labelId},{source=OwnershipSource.entries[it]})
+            OutlinedTextField(acquired,{acquired=it},label={Text("Tanggal diperoleh (YYYY-MM-DD)")},singleLine=true)
+            OutlinedTextField(owner,{owner=it},label={Text("Breeder/pemilik sebelumnya")},singleLine=true)
+            OutlinedTextField(price,{price=it.filter(Char::isDigit)},label={Text("Harga beli")},singleLine=true)
+            InventoryDropdown("Kelengkapan pedigree",confidence,listOf("PARTIAL","FULL","UNKNOWN"),{confidence=listOf("PARTIAL","FULL","UNKNOWN")[it]})
+            OutlinedTextField(sireRing,{sireRing=it},label={Text("Ring induk jantan")},singleLine=true)
+            OutlinedTextField(damRing,{damRing=it},label={Text("Ring induk betina")},singleLine=true)
+            OutlinedTextField(lineage,{lineage=it},label={Text("Catatan silsilah")},minLines=2)
+            OutlinedTextField(docs,{docs=it},label={Text("Catatan dokumen pedigree")},minLines=2)
+        }
+    },confirmButton={ Button(enabled=!busy && ring.isNotBlank() && breed.isNotBlank(),onClick={
+        val hatchMs=runCatching{SimpleDateFormat("yyyy-MM-dd",Locale.US).parse(hatch)?.time?:0L}.getOrDefault(0L)
+        val acquiredMs=runCatching{SimpleDateFormat("yyyy-MM-dd",Locale.US).parse(acquired)?.time?:System.currentTimeMillis()}.getOrDefault(System.currentTimeMillis())
+        onCreate(ring.trim(),name.trim().ifBlank{ring.trim()},sex,breed.trim(),color.trim(),hatchMs,cage.trim(),status,ownership,source,acquiredMs,owner.trim(),price.toLongOrNull()?:0L,confidence,sireRing.trim(),damRing.trim(),lineage.trim(),docs.trim())
+    }){Text(if(busy)"Menyimpan..." else "Simpan")} },dismissButton={TextButton(onClick=onDismiss){Text("Batal")}})
+}
+
 @Composable
 private fun InventoryMetric(title: String, value: String, modifier: Modifier = Modifier) {
     Card(modifier, shape = RoundedCornerShape(14.dp)) {
