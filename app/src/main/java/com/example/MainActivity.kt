@@ -75,6 +75,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.ads.AdMobManager
+import com.example.ads.KenariAdaptiveBanner
 import com.example.ads.findHostActivity
 import com.example.data.model.Canary
 import com.example.data.repository.BreedingRepository
@@ -234,21 +235,31 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             contentWindowInsets = WindowInsets.safeDrawing,
             bottomBar = {
-                if (!isExpanded) {
-                    NavigationBar(windowInsets = WindowInsets.navigationBars) {
-                        AppTab.entries.forEach { tab ->
-                            val selected = currentRoute == tab.route
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = { navigateToTab(tab) },
-                                icon = {
-                                    Icon(
-                                        imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
-                                        contentDescription = tab.label
-                                    )
-                                },
-                                label = { Text(tab.label, maxLines = 1, softWrap = false) }
-                            )
+                val showBanner = currentRoute in setOf(
+                    AppTab.DASHBOARD.route,
+                    AppTab.BREEDING.route,
+                    AppTab.CARE.route
+                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (showBanner) {
+                        KenariAdaptiveBanner()
+                    }
+                    if (!isExpanded) {
+                        NavigationBar(windowInsets = WindowInsets.navigationBars) {
+                            AppTab.entries.forEach { tab ->
+                                val selected = currentRoute == tab.route
+                                NavigationBarItem(
+                                    selected = selected,
+                                    onClick = { navigateToTab(tab) },
+                                    icon = {
+                                        Icon(
+                                            imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
+                                            contentDescription = tab.label
+                                        )
+                                    },
+                                    label = { Text(tab.label, maxLines = 1, softWrap = false) }
+                                )
+                            }
                         }
                     }
                 }
