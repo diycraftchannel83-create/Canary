@@ -3,7 +3,6 @@ package com.example.ui.screens
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 
 import androidx.compose.foundation.background
@@ -106,7 +105,6 @@ fun DashboardScreen(
     onSignOut: () -> Unit
 ) {
     var showFarmSettingsDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val farmLogoPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
