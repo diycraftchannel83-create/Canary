@@ -765,7 +765,9 @@ private fun CanaryFormDialog(
         recordedHatchedCount: Int,
         recordedFledgedCount: Int,
         productionHistoryNotes: String,
-        newPhotoBase64: String?
+        newPhotoBase64: String?,
+        externalSirePhotoBase64: String?,
+        externalDamPhotoBase64: String?
     ) -> Unit
 ) {
     val context = LocalContext.current
@@ -784,7 +786,9 @@ private fun CanaryFormDialog(
     var selectedSireId by remember { mutableStateOf(initial?.sireId) }
     var selectedDamId by remember { mutableStateOf(initial?.damId) }
     var extSireRing by remember { mutableStateOf(initial?.sireRing ?: "") }
-    var extDamRing by remember { mutableStateOf(initial?.damRing ?: "") }
+    var extDamRing by remember { mutableStateOf(initial?.damRing ?: "")
+    var extSirePhoto by remember(initial?.id) { mutableStateOf(initial?.externalSirePhotoBase64) }
+    var extDamPhoto by remember(initial?.id) { mutableStateOf(initial?.externalDamPhotoBase64) } }
     var breedingStatus by remember { mutableStateOf(initial?.breedingStatusEnum ?: BreedingStatus.ACTIVE) }
     var healthStatus by remember { mutableStateOf(initial?.healthStatusEnum ?: HealthStatus.HEALTHY) }
     var healthScore by remember { mutableIntStateOf((initial?.healthScore ?: 90L).toInt()) }
@@ -798,6 +802,10 @@ private fun CanaryFormDialog(
     var showDatePicker by remember { mutableStateOf(false) }
     var sireMenuOpen by remember { mutableStateOf(false) }
     var damMenuOpen by remember { mutableStateOf(false) }
+    var pickingSirePhoto by remember { mutableStateOf(false) }
+    var pickingDamPhoto by remember { mutableStateOf(false) }
+    val sirePhotoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { extSirePhoto = CanaryPhotoUtils.encodeCapturedPhotoToBase64(context, it) } }
+    val damPhotoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { extDamPhoto = CanaryPhotoUtils.encodeCapturedPhotoToBase64(context, it) } } }
 
     var pendingPhotoBase64 by remember(initial?.id) { mutableStateOf<String?>(null) }
     var pendingCaptureUri by remember { mutableStateOf<Uri?>(null) }
@@ -936,6 +944,10 @@ private fun CanaryFormDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                if (selectedSireId == null) {
+                    ParentPhotoField(title = "Foto Indukan Jantan Eksternal", photoBase64 = extSirePhoto, onPick = { sirePhotoPicker.launch("image/*") })
+                }
+
                 }
 
                 // Dam picker
@@ -975,6 +987,10 @@ private fun CanaryFormDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                if (selectedDamId == null) {
+                    ParentPhotoField(title = "Foto Indukan Betina Eksternal", photoBase64 = extDamPhoto, onPick = { damPhotoPicker.launch("image/*") })
+                }
+
                 }
 
             }
@@ -992,7 +1008,9 @@ private fun CanaryFormDialog(
                         recordedHatchedText.toIntOrNull() ?: 0,
                         recordedFledgedText.toIntOrNull() ?: 0,
                         productionHistoryNotes,
-                        if (alreadyUploadedPhoto) null else pendingPhotoBase64
+                        if (alreadyUploadedPhoto) null else pendingPhotoBase64,
+                        extSirePhoto,
+                        extDamPhoto
                     )
                 },
                 enabled = !isBusy && ringCode.isNotBlank() && breed.isNotBlank(),
@@ -1021,6 +1039,20 @@ private fun CanaryFormDialog(
             }
         ) {
             DatePicker(state = pickerState)
+        }
+    }
+}
+
+@Composable
+private fun ParentPhotoField(title: String, photoBase64: String?, onPick: () -> Unit) {
+    val bitmap = remember(photoBase64) { CanaryPhotoUtils.decodeBase64ToImageBitmap(photoBase64) }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+        Text(title, style = MaterialTheme.typography.labelMedium)
+        if (bitmap != null) Image(bitmap = bitmap, contentDescription = title, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(12.dp)))
+        OutlinedButton(onClick = onPick, modifier = Modifier.fillMaxWidth()) {
+            Icon(Icons.Rounded.CameraAlt, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(if (photoBase64.isNullOrBlank()) "Pilih Foto dari Galeri" else "Ganti Foto Indukan")
         }
     }
 }
