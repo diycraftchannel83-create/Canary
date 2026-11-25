@@ -56,6 +56,17 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
 
+      - name: Print CI debug keystore SHA-1 and SHA-256
+        run: |
+          DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
+          if [ ! -f "$DEBUG_KEYSTORE" ]; then
+            echo "ERROR: CI debug keystore not found at $DEBUG_KEYSTORE"
+            find "$HOME" -name debug.keystore -type f 2>/dev/null || true
+            exit 1
+          fi
+          keytool -list -v -keystore "$DEBUG_KEYSTORE" -storepass android -alias androiddebugkey | grep -E "SHA1:|SHA256:"
+          echo "NOTE: This fingerprint belongs to the runner-generated debug keystore for this workflow run."
+
       - name: Run unit tests (retry transient Maven failures)
         run: |
           for attempt in 1 2 3; do
