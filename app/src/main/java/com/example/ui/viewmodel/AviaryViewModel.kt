@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -564,6 +565,34 @@ class AviaryViewModel(
                 onDone()
             }.onFailure {
                 _actionMessage.value = it.localizedMessage ?: "Gagal menyimpan pengaturan farm."
+            }
+        }
+    }
+
+    fun uploadFarmLogo(aviaryId: String, imageUri: Uri, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            _isBusy.value = true
+            val result = repository.uploadFarmLogo(aviaryId, imageUri)
+            _isBusy.value = false
+            result.onSuccess {
+                _actionMessage.value = "Logo Farm berhasil diunggah dan disinkronkan ke tim."
+                onDone()
+            }.onFailure {
+                _actionMessage.value = it.localizedMessage ?: "Gagal mengunggah logo farm."
+            }
+        }
+    }
+
+    fun deleteFarmLogo(aviaryId: String, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            _isBusy.value = true
+            val result = repository.deleteFarmLogo(aviaryId)
+            _isBusy.value = false
+            result.onSuccess {
+                _actionMessage.value = "Logo Farm dihapus. Logo default digunakan kembali."
+                onDone()
+            }.onFailure {
+                _actionMessage.value = it.localizedMessage ?: "Gagal menghapus logo farm."
             }
         }
     }
