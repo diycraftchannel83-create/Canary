@@ -6,7 +6,7 @@ on:
       logo_path:
         description: 'Repository path to farm logo image (PNG/JPG/WebP)'
         required: true
-        default: 'app/src/main/res/drawable/app_icon_canary_1795574368510.jpg'
+        default: 'can.png'
 
 permissions:
   contents: write
