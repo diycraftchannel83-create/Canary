@@ -2,4 +2,5 @@
     <string name="app_name">Kenari Tasikmalaya</string>
     <string name="admob_app_open_unit_id" translatable="false">ca-app-pub-1254774552944426/9533896500</string>
     <string name="admob_rewarded_interstitial_unit_id" translatable="false">ca-app-pub-1254774552944426/5741489179</string>
+    <string name="admob_banner_unit_id" translatable="false">ca-app-pub-1254774552944426/8499155666</string>
 </resources>
