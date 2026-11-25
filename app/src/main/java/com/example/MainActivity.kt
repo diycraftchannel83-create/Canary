@@ -255,7 +255,7 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
     val currentRoute = navBackStackEntry?.destination?.route ?: AppTab.DASHBOARD.route
 
     var healthTargetCanary by remember { mutableStateOf<Canary?>(null) }
-    var pendingExportRequest by remember { mutableStateOf<Pair<AviaryDashboardData, Boolean>?>(null }
+    var pendingExportRequest by remember { mutableStateOf<Pair<AviaryDashboardData, Boolean>?>(null) }
     var pendingTab by remember { mutableStateOf<AppTab?>(null) }
 
     fun handleExportRequest(exportData: AviaryDashboardData, isExcel: Boolean) {
