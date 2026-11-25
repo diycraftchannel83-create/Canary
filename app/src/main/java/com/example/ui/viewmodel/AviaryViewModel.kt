@@ -298,6 +298,16 @@ class AviaryViewModel(
         }
     }
 
+    fun updateInventoryMetadata(aviaryId: String, canaryId: String, inventoryStatus: String, ownershipStatus: String, ownershipSource: String, acquiredDateEpochMs: Long, previousOwnerName: String, purchasePrice: Long, pedigreeConfidence: String, pedigreeDocumentNotes: String) {
+        viewModelScope.launch {
+            _isBusy.value = true
+            val result = repository.updateCanaryInventoryMetadata(aviaryId, canaryId, inventoryStatus, ownershipStatus, ownershipSource, acquiredDateEpochMs, previousOwnerName, purchasePrice, pedigreeConfidence, pedigreeDocumentNotes)
+            _isBusy.value = false
+            result.onSuccess { _actionMessage.value = "Metadata inventaris dan silsilah diperbarui." }
+                .onFailure { _actionMessage.value = it.localizedMessage ?: "Gagal memperbarui metadata inventaris." }
+        }
+    }
+
     fun deleteCanary(aviaryId: String, canaryId: String) {
         viewModelScope.launch {
             repository.deleteCanary(aviaryId, canaryId)
