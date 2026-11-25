@@ -3,7 +3,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     function isFarmMember(aviaryId) {
       return request.auth != null &&
-        firestore.get(/databases/(default)/documents/aviaries/$(aviaryId)).data.memberUids.hasAny([request.auth.uid]);
+        firestore.get(/databases/ai-studio-android-kenaripe-62004774-6ed3-4939-83d3-a67475913af9/documents/aviaries/$(aviaryId)).data.memberUids.hasAny([request.auth.uid]);
     }
 
     match /aviaries/{aviaryId}/farm_logo/{fileName} {
