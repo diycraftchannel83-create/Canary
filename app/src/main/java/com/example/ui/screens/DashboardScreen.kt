@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -96,7 +97,7 @@ fun DashboardScreen(
     onSelectCanaryFilter: (String?) -> Unit,
     onToggleSupplementToday: (SupplementTask, Boolean) -> Unit,
     onSaveFarmSettings: (aviaryId: String?, farmName: String, farmAddress: String, farmPhone: String, onDone: () -> Unit) -> Unit,
-    onUploadFarmLogo: (aviaryId: String, imageUri: Uri, onDone: () -> Unit) -> Unit,
+    onUploadFarmLogo: (aviaryId: String, imageUri: Uri, mimeType: String, onDone: () -> Unit) -> Unit,
     onDeleteFarmLogo: (aviaryId: String, onDone: () -> Unit) -> Unit,
     onNavigateToCare: () -> Unit,
     onNavigateToBreeding: () -> Unit,
@@ -105,12 +106,13 @@ fun DashboardScreen(
     onSignOut: () -> Unit
 ) {
     var showFarmSettingsDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val farmLogoPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         val aviaryId = data.activeAviary?.id.orEmpty()
         if (uri != null && aviaryId.isNotBlank()) {
-            onUploadFarmLogo(aviaryId, uri) { }
+            onUploadFarmLogo(aviaryId, uri, context.contentResolver.getType(uri) ?: "image/jpeg") { }
         }
     }
     val activeIncubations = data.clutches.filter {
