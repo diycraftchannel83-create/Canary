@@ -56,8 +56,21 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
 
-      - name: Run unit tests
-        run: gradle test --stacktrace
+      - name: Run unit tests (retry transient Maven failures)
+        run: |
+          for attempt in 1 2 3; do
+            echo "Unit test attempt $attempt/3"
+            if gradle test --stacktrace; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              delay=$((attempt * 30))
+              echo "Test failed; waiting ${delay}s before retry for transient dependency/rate-limit errors."
+              sleep "$delay"
+            fi
+          done
+          echo "Unit tests failed after 3 attempts."
+          exit 1
 
       - name: Decode Android release keystore
         if: github.event_name != 'pull_request'
@@ -90,6 +103,7 @@ jobs:
           gradle assembleRelease bundleRelease --stacktrace
 
       - name: Upload debug APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Kenari-Tasikmalaya-debug
