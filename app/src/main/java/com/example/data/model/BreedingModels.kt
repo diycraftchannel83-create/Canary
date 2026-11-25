@@ -89,6 +89,7 @@ data class Aviary(
     val farmName: String = "",
     val farmAddress: String = "",
     val farmPhone: String = "",
+    val farmLogoUrl: String = "",
     val inviteCode: String = "",
     val memberUids: List<String> = emptyList(),
     val memberLabels: List<String> = emptyList(),
