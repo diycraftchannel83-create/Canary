@@ -1,0 +1,6 @@
+{
+  "name": "Kenari Tasikmalaya",
+  "description": "Kenari Tasikmalaya — Aplikasi pencatat silsilah kenari breeding jantan dan betina, riwayat produksi, kalkulator penetasan 21 hari, analitik produktivitas, notifikasi otomatis, dan laporan PDF/Excel tersinkronisasi cloud.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,215 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated breeder profile, active aviary pointer, and notification preferences.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the user." },
+        "displayName": { "type": "string", "description": "Display name shown to aviary team members." },
+        "email": { "type": "string", "description": "Private user email from Google Sign-In." },
+        "activeAviaryId": { "type": "string", "description": "Currently selected Aviary workspace document ID." },
+        "supplementReminderEnabled": { "type": "boolean", "description": "Daily supplement notification toggle." },
+        "supplementHour": { "type": "integer", "description": "Daily supplement reminder hour (0-23)." },
+        "supplementMinute": { "type": "integer", "description": "Daily supplement reminder minute (0-59)." },
+        "incubationReminderEnabled": { "type": "boolean", "description": "21-day incubation milestone notification toggle." },
+        "healthAlertThreshold": { "type": "integer", "description": "Score drop threshold for early warning alerts." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "displayName", "activeAviaryId", "supplementReminderEnabled", "supplementHour", "supplementMinute", "incubationReminderEnabled", "healthAlertThreshold", "createdAt", "updatedAt"]
+    },
+    "Aviary": {
+      "title": "Aviary",
+      "description": "Shared breeding aviary workspace supporting multi-device team collaboration.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "description": "UID of the aviary owner." },
+        "name": { "type": "string", "description": "Aviary workspace display name." },
+        "farmName": { "type": "string", "description": "Configured breeding farm name." },
+        "farmAddress": { "type": "string", "description": "Farm street address." },
+        "farmPhone": { "type": "string", "description": "Farm contact phone number." },
+        "inviteCode": { "type": "string", "description": "Alphanumeric team invite code." },
+        "memberUids": { "type": "array", "description": "Bounded list of member UIDs (max 20)." },
+        "memberLabels": { "type": "array", "description": "Bounded list of member display labels (max 20)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["ownerId", "name", "inviteCode", "memberUids", "memberLabels", "createdAt", "updatedAt"]
+    },
+    "AviaryInvite": {
+      "title": "AviaryInvite",
+      "description": "Invite code lookup record pointing to a shared aviary.",
+      "type": "object",
+      "properties": {
+        "aviaryId": { "type": "string", "description": "Target Aviary document ID." },
+        "aviaryName": { "type": "string", "description": "Target Aviary display name." },
+        "ownerId": { "type": "string", "description": "UID of the aviary owner." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["aviaryId", "aviaryName", "ownerId", "createdAt"]
+    },
+    "Canary": {
+      "title": "Canary",
+      "description": "Individual breeding canary (male or female) with genealogy and health state.",
+      "type": "object",
+      "properties": {
+        "aviaryId": { "type": "string" },
+        "userId": { "type": "string" },
+        "memberUids": { "type": "array" },
+        "ringCode": { "type": "string" },
+        "name": { "type": "string" },
+        "sex": { "type": "string", "enum": ["MALE", "FEMALE"] },
+        "breed": { "type": "string" },
+        "featherColor": { "type": "string" },
+        "hatchDateEpochMs": { "type": "integer" },
+        "sireId": { "type": "string" },
+        "damId": { "type": "string" },
+        "sireRing": { "type": "string" },
+        "damRing": { "type": "string" },
+        "cageCode": { "type": "string" },
+        "breedingStatus": { "type": "string", "enum": ["ACTIVE", "RESTING", "RETIRED"] },
+        "healthStatus": { "type": "string", "enum": ["HEALTHY", "MONITORING", "CRITICAL"] },
+        "healthScore": { "type": "integer" },
+        "notes": { "type": "string" },
+        "lineageNotes": { "type": "string", "description": "Lineage, strain, or bloodline notes for genealogy." },
+        "recordedClutchCount": { "type": "integer", "description": "Recorded total breeding clutches." },
+        "recordedEggCount": { "type": "integer", "description": "Recorded total eggs produced." },
+        "recordedHatchedCount": { "type": "integer", "description": "Recorded total eggs hatched." },
+        "recordedFledgedCount": { "type": "integer", "description": "Recorded total chicks fledged." },
+        "productionHistoryNotes": { "type": "string", "description": "Detailed production history notes for this breeder." },
+        "photoBase64": { "type": "string", "description": "Write-once compressed camera photo of the original breeding bird (immutable after upload)." },
+        "photoCapturedAtEpochMs": { "type": "integer", "description": "Timestamp when the original bird photo was captured (immutable after upload)." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["aviaryId", "userId", "memberUids", "ringCode", "name", "sex", "breed", "featherColor", "hatchDateEpochMs", "cageCode", "breedingStatus", "healthStatus", "healthScore", "notes", "createdAt", "updatedAt"]
+    },
+    "BreedingPair": {
+      "title": "BreedingPair",
+      "description": "Paired male and female breeding canaries assigned to a cage.",
+      "type": "object",
+      "properties": {
+        "aviaryId": { "type": "string" },
+        "userId": { "type": "string" },
+        "memberUids": { "type": "array" },
+        "cageCode": { "type": "string" },
+        "sireId": { "type": "string" },
+        "sireName": { "type": "string" },
+        "sireRing": { "type": "string" },
+        "damId": { "type": "string" },
+        "damName": { "type": "string" },
+        "damRing": { "type": "string" },
+        "pairedDateEpochMs": { "type": "integer" },
+        "status": { "type": "string", "enum": ["ACTIVE", "RESTING", "ARCHIVED"] },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["aviaryId", "userId", "memberUids", "cageCode", "sireId", "sireName", "sireRing", "damId", "damName", "damRing", "pairedDateEpochMs", "status", "notes", "createdAt", "updatedAt"]
+    },
+    "BreedingClutch": {
+      "title": "BreedingClutch",
+      "description": "Clutch production record with incubation start date and 21-day expected hatch date.",
+      "type": "object",
+      "properties": {
+        "aviaryId": { "type": "string" },
+        "userId": { "type": "string" },
+        "memberUids": { "type": "array" },
+        "pairId": { "type": "string" },
+        "sireId": { "type": "string" },
+        "damId": { "type": "string" },
+        "cageCode": { "type": "string" },
+        "clutchNumber": { "type": "integer" },
+        "eggCount": { "type": "integer" },
+        "fertileCount": { "type": "integer" },
+        "hatchedCount": { "type": "integer" },
+        "fledgedCount": { "type": "integer" },
+        "incubationStartEpochMs": { "type": "integer" },
+        "expectedHatchEpochMs": { "type": "integer" },
+        "actualHatchEpochMs": { "type": "integer" },
+        "status": { "type": "string", "enum": ["LAYING", "INCUBATING", "HATCHED", "COMPLETED", "FAILED"] },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["aviaryId", "userId", "memberUids", "pairId", "sireId", "damId", "cageCode", "clutchNumber", "eggCount", "fertileCount", "hatchedCount", "fledgedCount", "status", "notes", "createdAt", "updatedAt"]
+    },
+    "HealthLog": {
+      "title": "HealthLog",
+      "description": "Canary health inspection record with early warning detection for drastic score drops.",
+      "type": "object",
+      "properties": {
+        "aviaryId": { "type": "string" },
+        "userId": { "type": "string" },
+        "memberUids": { "type": "array" },
+        "canaryId": { "type": "string" },
+        "canaryName": { "type": "string" },
+        "canaryRing": { "type": "string" },
+        "healthScore": { "type": "integer" },
+        "previousScore": { "type": "integer" },
+        "healthStatus": { "type": "string", "enum": ["HEALTHY", "MONITORING", "CRITICAL"] },
+        "symptoms": { "type": "string" },
+        "actionTaken": { "type": "string" },
+        "recordedDateEpochMs": { "type": "integer" },
+        "alertTriggered": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["aviaryId", "userId", "memberUids", "canaryId", "canaryName", "canaryRing", "healthScore", "previousScore", "healthStatus", "symptoms", "actionTaken", "recordedDateEpochMs", "alertTriggered", "createdAt", "updatedAt"]
+    },
+    "SupplementTask": {
+      "title": "SupplementTask",
+      "description": "Daily aviary supplement schedule and completion tracking.",
+      "type": "object",
+      "properties": {
+        "aviaryId": { "type": "string" },
+        "userId": { "type": "string" },
+        "memberUids": { "type": "array" },
+        "title": { "type": "string" },
+        "dosage": { "type": "string" },
+        "targetGroup": { "type": "string" },
+        "timeLabel": { "type": "string" },
+        "lastCompletedDate": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["aviaryId", "userId", "memberUids", "title", "dosage", "targetGroup", "timeLabel", "lastCompletedDate", "active", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private per-user profile, active aviary pointer, and notification preferences."
+    },
+    "/aviaries/{aviaryId}": {
+      "schema": { "$ref": "#/entities/Aviary" },
+      "description": "Shared breeding aviary workspace for multi-device team sync."
+    },
+    "/aviary_invites/{inviteCode}": {
+      "schema": { "$ref": "#/entities/AviaryInvite" },
+      "description": "Invite code lookup documents for joining a breeding team."
+    },
+    "/aviaries/{aviaryId}/canaries/{canaryId}": {
+      "schema": { "$ref": "#/entities/Canary" },
+      "description": "Registered breeding canaries and genealogy references."
+    },
+    "/aviaries/{aviaryId}/pairs/{pairId}": {
+      "schema": { "$ref": "#/entities/BreedingPair" },
+      "description": "Active and historical male-female breeding pairs."
+    },
+    "/aviaries/{aviaryId}/clutches/{clutchId}": {
+      "schema": { "$ref": "#/entities/BreedingClutch" },
+      "description": "Breeding clutch production records with 21-day incubation tracking."
+    },
+    "/aviaries/{aviaryId}/health_logs/{logId}": {
+      "schema": { "$ref": "#/entities/HealthLog" },
+      "description": "Health inspection logs and early warning drop records."
+    },
+    "/aviaries/{aviaryId}/supplement_logs/{logId}": {
+      "schema": { "$ref": "#/entities/SupplementTask" },
+      "description": "Daily supplement schedule items and completion dates."
+    }
+  }
+}

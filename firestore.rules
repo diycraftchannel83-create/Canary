@@ -1,0 +1,433 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidInviteCode(code) {
+      return code is string && code.size() >= 4 && code.size() <= 16 && code.matches('^[A-Z0-9]+$');
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidMemberList(members) {
+      return members is list &&
+             members.size() >= 1 &&
+             members.size() <= 20 &&
+             members[0] is string;
+    }
+
+    function isValidLabelList(labels) {
+      return labels is list &&
+             labels.size() <= 20 &&
+             (labels.size() == 0 || labels[0] is string);
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+             data.email is string && data.email.size() <= 120 &&
+             isValidId(data.activeAviaryId) &&
+             data.supplementReminderEnabled is bool &&
+             data.supplementHour is int && data.supplementHour >= 0 && data.supplementHour <= 23 &&
+             data.supplementMinute is int && data.supplementMinute >= 0 && data.supplementMinute <= 59 &&
+             data.incubationReminderEnabled is bool &&
+             data.healthAlertThreshold is int && data.healthAlertThreshold >= 5 && data.healthAlertThreshold <= 60;
+    }
+
+    function isValidAviary(data) {
+      return data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+             data.name is string && data.name.size() >= 2 && data.name.size() <= 60 &&
+             (!('farmName' in data) || (data.farmName is string && data.farmName.size() <= 80)) &&
+             (!('farmAddress' in data) || (data.farmAddress is string && data.farmAddress.size() <= 200)) &&
+             (!('farmPhone' in data) || (data.farmPhone is string && data.farmPhone.size() <= 30)) &&
+             isValidInviteCode(data.inviteCode) &&
+             isValidMemberList(data.memberUids) &&
+             isValidLabelList(data.memberLabels);
+    }
+
+    function isValidAviaryInvite(data) {
+      return isValidId(data.aviaryId) &&
+             data.aviaryName is string && data.aviaryName.size() >= 2 && data.aviaryName.size() <= 60 &&
+             data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128;
+    }
+
+    function isValidCanary(data) {
+      return isValidId(data.aviaryId) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isValidMemberList(data.memberUids) &&
+             data.ringCode is string && data.ringCode.size() >= 1 && data.ringCode.size() <= 30 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 50 &&
+             data.sex in ['MALE', 'FEMALE'] &&
+             data.breed is string && data.breed.size() >= 1 && data.breed.size() <= 40 &&
+             data.featherColor is string && data.featherColor.size() <= 40 &&
+             data.hatchDateEpochMs is int && data.hatchDateEpochMs >= 0 &&
+             (!('sireId' in data) || (data.sireId is string && data.sireId.size() <= 128)) &&
+             (!('damId' in data) || (data.damId is string && data.damId.size() <= 128)) &&
+             (!('sireRing' in data) || (data.sireRing is string && data.sireRing.size() <= 30)) &&
+             (!('damRing' in data) || (data.damRing is string && data.damRing.size() <= 30)) &&
+             data.cageCode is string && data.cageCode.size() <= 20 &&
+             data.breedingStatus in ['ACTIVE', 'RESTING', 'RETIRED'] &&
+             data.healthStatus in ['HEALTHY', 'MONITORING', 'CRITICAL'] &&
+             data.healthScore is int && data.healthScore >= 0 && data.healthScore <= 100 &&
+             data.notes is string && data.notes.size() <= 500 &&
+             (!('lineageNotes' in data) || (data.lineageNotes is string && data.lineageNotes.size() <= 300)) &&
+             (!('recordedClutchCount' in data) || (data.recordedClutchCount is int && data.recordedClutchCount >= 0 && data.recordedClutchCount <= 500)) &&
+             (!('recordedEggCount' in data) || (data.recordedEggCount is int && data.recordedEggCount >= 0 && data.recordedEggCount <= 2000)) &&
+             (!('recordedHatchedCount' in data) || (data.recordedHatchedCount is int && data.recordedHatchedCount >= 0 && data.recordedHatchedCount <= 2000)) &&
+             (!('recordedFledgedCount' in data) || (data.recordedFledgedCount is int && data.recordedFledgedCount >= 0 && data.recordedFledgedCount <= 2000)) &&
+             (!('productionHistoryNotes' in data) || (data.productionHistoryNotes is string && data.productionHistoryNotes.size() <= 500)) &&
+             (!('photoBase64' in data) || (data.photoBase64 is string && data.photoBase64.size() >= 100 && data.photoBase64.size() <= 350000)) &&
+             (!('photoCapturedAtEpochMs' in data) || (data.photoCapturedAtEpochMs is int && data.photoCapturedAtEpochMs >= 0));
+    }
+
+    function isCanaryPhotoImmutable(existingData, incomingData) {
+      return !('photoBase64' in existingData) ||
+             existingData.photoBase64 == '' ||
+             (
+               ('photoBase64' in incomingData) &&
+               incomingData.photoBase64 == existingData.photoBase64 &&
+               (
+                 !('photoCapturedAtEpochMs' in existingData) ||
+                 (('photoCapturedAtEpochMs' in incomingData) && incomingData.photoCapturedAtEpochMs == existingData.photoCapturedAtEpochMs)
+               )
+             );
+    }
+
+    function isValidPair(data) {
+      return isValidId(data.aviaryId) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isValidMemberList(data.memberUids) &&
+             data.cageCode is string && data.cageCode.size() >= 1 && data.cageCode.size() <= 20 &&
+             isValidId(data.sireId) &&
+             data.sireName is string && data.sireName.size() >= 1 && data.sireName.size() <= 50 &&
+             data.sireRing is string && data.sireRing.size() >= 1 && data.sireRing.size() <= 30 &&
+             isValidId(data.damId) &&
+             data.damName is string && data.damName.size() >= 1 && data.damName.size() <= 50 &&
+             data.damRing is string && data.damRing.size() >= 1 && data.damRing.size() <= 30 &&
+             data.pairedDateEpochMs is int && data.pairedDateEpochMs >= 0 &&
+             data.status in ['ACTIVE', 'RESTING', 'ARCHIVED'] &&
+             data.notes is string && data.notes.size() <= 300;
+    }
+
+    function isValidClutch(data) {
+      return isValidId(data.aviaryId) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isValidMemberList(data.memberUids) &&
+             isValidId(data.pairId) &&
+             isValidId(data.sireId) &&
+             isValidId(data.damId) &&
+             data.cageCode is string && data.cageCode.size() >= 1 && data.cageCode.size() <= 20 &&
+             data.clutchNumber is int && data.clutchNumber >= 1 && data.clutchNumber <= 50 &&
+             data.eggCount is int && data.eggCount >= 0 && data.eggCount <= 12 &&
+             data.fertileCount is int && data.fertileCount >= 0 && data.fertileCount <= 12 &&
+             data.hatchedCount is int && data.hatchedCount >= 0 && data.hatchedCount <= 12 &&
+             data.fledgedCount is int && data.fledgedCount >= 0 && data.fledgedCount <= 12 &&
+             (!('incubationStartEpochMs' in data) || (data.incubationStartEpochMs is int && data.incubationStartEpochMs >= 0)) &&
+             (!('expectedHatchEpochMs' in data) || (data.expectedHatchEpochMs is int && data.expectedHatchEpochMs >= 0)) &&
+             (!('actualHatchEpochMs' in data) || (data.actualHatchEpochMs is int && data.actualHatchEpochMs >= 0)) &&
+             data.status in ['LAYING', 'INCUBATING', 'HATCHED', 'COMPLETED', 'FAILED'] &&
+             data.notes is string && data.notes.size() <= 300;
+    }
+
+    function isValidHealthLog(data) {
+      return isValidId(data.aviaryId) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isValidMemberList(data.memberUids) &&
+             isValidId(data.canaryId) &&
+             data.canaryName is string && data.canaryName.size() >= 1 && data.canaryName.size() <= 50 &&
+             data.canaryRing is string && data.canaryRing.size() >= 1 && data.canaryRing.size() <= 30 &&
+             data.healthScore is int && data.healthScore >= 0 && data.healthScore <= 100 &&
+             data.previousScore is int && data.previousScore >= 0 && data.previousScore <= 100 &&
+             data.healthStatus in ['HEALTHY', 'MONITORING', 'CRITICAL'] &&
+             data.symptoms is string && data.symptoms.size() <= 200 &&
+             data.actionTaken is string && data.actionTaken.size() <= 200 &&
+             data.recordedDateEpochMs is int && data.recordedDateEpochMs >= 0 &&
+             data.alertTriggered is bool;
+    }
+
+    function isValidSupplementTask(data) {
+      return isValidId(data.aviaryId) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isValidMemberList(data.memberUids) &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.dosage is string && data.dosage.size() <= 60 &&
+             data.targetGroup is string && data.targetGroup.size() >= 1 && data.targetGroup.size() <= 60 &&
+             data.timeLabel is string && data.timeLabel.size() >= 1 && data.timeLabel.size() <= 10 &&
+             data.lastCompletedDate is string && data.lastCompletedDate.size() <= 12 &&
+             data.active is bool;
+    }
+
+    function isAviaryMemberByParent(aviaryId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/aviaries/$(aviaryId)) &&
+             request.auth.uid in get(/databases/$(database)/documents/aviaries/$(aviaryId)).data.memberUids;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'email', 'activeAviaryId', 'supplementReminderEnabled', 'supplementHour', 'supplementMinute', 'incubationReminderEnabled', 'healthAlertThreshold', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'activeAviaryId', 'supplementReminderEnabled', 'supplementHour', 'supplementMinute', 'incubationReminderEnabled', 'healthAlertThreshold', 'createdAt', 'updatedAt']) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidUserProfile(incoming());
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'activeAviaryId', 'supplementReminderEnabled', 'supplementHour', 'supplementMinute', 'incubationReminderEnabled', 'healthAlertThreshold', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+    }
+
+    match /aviary_invites/{inviteCode} {
+      allow get: if isSignedIn() && isValidInviteCode(inviteCode);
+      allow list: if false;
+      allow create: if isSignedIn() &&
+                       isValidInviteCode(inviteCode) &&
+                       incoming().ownerId == request.auth.uid &&
+                       incoming().keys().hasAll(['aviaryId', 'aviaryName', 'ownerId', 'createdAt']) &&
+                       incoming().keys().hasOnly(['aviaryId', 'aviaryName', 'ownerId', 'createdAt']) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidAviaryInvite(incoming());
+      allow update: if isSignedIn() &&
+                       isValidInviteCode(inviteCode) &&
+                       existing().ownerId == request.auth.uid &&
+                       isValidAviaryInvite(incoming()) &&
+                       incoming().ownerId == existing().ownerId &&
+                       incoming().aviaryId == existing().aviaryId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['aviaryName']);
+      allow delete: if isSignedIn() && isValidInviteCode(inviteCode) && existing().ownerId == request.auth.uid;
+    }
+
+    match /aviaries/{aviaryId} {
+      allow get: if isSignedIn() && isValidId(aviaryId) && request.auth.uid in existing().memberUids;
+      allow list: if isSignedIn() && request.auth.uid in existing().memberUids;
+      allow create: if isSignedIn() &&
+                       isValidId(aviaryId) &&
+                       incoming().ownerId == request.auth.uid &&
+                       request.auth.uid in incoming().memberUids &&
+                       incoming().memberUids.size() == 1 &&
+                       incoming().keys().hasAll(['ownerId', 'name', 'inviteCode', 'memberUids', 'memberLabels', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['ownerId', 'name', 'farmName', 'farmAddress', 'farmPhone', 'inviteCode', 'memberUids', 'memberLabels', 'createdAt', 'updatedAt']) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidAviary(incoming());
+      allow update: if isSignedIn() &&
+                       isValidId(aviaryId) &&
+                       isValidAviary(incoming()) &&
+                       incoming().ownerId == existing().ownerId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) && (
+                         // Action 1: Owner updates aviary metadata, farm profile, or member list
+                         (
+                           existing().ownerId == request.auth.uid &&
+                           request.auth.uid in incoming().memberUids &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['name', 'farmName', 'farmAddress', 'farmPhone', 'inviteCode', 'memberUids', 'memberLabels', 'updatedAt'])
+                         ) ||
+                         // Action 1b: Team member updates farm settings
+                         (
+                           request.auth.uid in existing().memberUids &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['farmName', 'farmAddress', 'farmPhone', 'updatedAt'])
+                         ) ||
+                         // Action 2: Authenticated user joins via verified invite code
+                         (
+                           !(request.auth.uid in existing().memberUids) &&
+                           request.auth.uid in incoming().memberUids &&
+                           incoming().memberUids.hasAll(existing().memberUids) &&
+                           incoming().memberUids.size() == existing().memberUids.size() + 1 &&
+                           incoming().inviteCode == existing().inviteCode &&
+                           exists(/databases/$(database)/documents/aviary_invites/$(incoming().inviteCode)) &&
+                           get(/databases/$(database)/documents/aviary_invites/$(incoming().inviteCode)).data.aviaryId == aviaryId &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['memberUids', 'memberLabels', 'updatedAt'])
+                         ) ||
+                         // Action 3: Non-owner member leaves aviary
+                         (
+                           request.auth.uid in existing().memberUids &&
+                           existing().ownerId != request.auth.uid &&
+                           !(request.auth.uid in incoming().memberUids) &&
+                           existing().memberUids.hasAll(incoming().memberUids) &&
+                           incoming().memberUids.size() == existing().memberUids.size() - 1 &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['memberUids', 'memberLabels', 'updatedAt'])
+                         )
+                       );
+      allow delete: if isSignedIn() && isValidId(aviaryId) && existing().ownerId == request.auth.uid;
+
+      match /canaries/{canaryId} {
+        allow get: if isSignedIn() && isValidId(canaryId) && request.auth.uid in existing().memberUids;
+        allow list: if isSignedIn() && request.auth.uid in existing().memberUids;
+        allow create: if isSignedIn() &&
+                         isValidId(canaryId) &&
+                         incoming().aviaryId == aviaryId &&
+                         incoming().userId == request.auth.uid &&
+                         request.auth.uid in incoming().memberUids &&
+                         incoming().keys().hasAll(['aviaryId', 'userId', 'memberUids', 'ringCode', 'name', 'sex', 'breed', 'featherColor', 'hatchDateEpochMs', 'cageCode', 'breedingStatus', 'healthStatus', 'healthScore', 'notes', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['aviaryId', 'userId', 'memberUids', 'ringCode', 'name', 'sex', 'breed', 'featherColor', 'hatchDateEpochMs', 'sireId', 'damId', 'sireRing', 'damRing', 'cageCode', 'breedingStatus', 'healthStatus', 'healthScore', 'notes', 'lineageNotes', 'recordedClutchCount', 'recordedEggCount', 'recordedHatchedCount', 'recordedFledgedCount', 'productionHistoryNotes', 'photoBase64', 'photoCapturedAtEpochMs', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidCanary(incoming()) &&
+                         isAviaryMemberByParent(aviaryId);
+        allow update: if isSignedIn() &&
+                         isValidId(canaryId) &&
+                         isValidCanary(incoming()) &&
+                         isCanaryPhotoImmutable(existing(), incoming()) &&
+                         incoming().aviaryId == existing().aviaryId &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) && (
+                           (
+                             request.auth.uid in existing().memberUids &&
+                             incoming().diff(existing()).affectedKeys().hasOnly(['ringCode', 'name', 'sex', 'breed', 'featherColor', 'hatchDateEpochMs', 'sireId', 'damId', 'sireRing', 'damRing', 'cageCode', 'breedingStatus', 'healthStatus', 'healthScore', 'notes', 'lineageNotes', 'recordedClutchCount', 'recordedEggCount', 'recordedHatchedCount', 'recordedFledgedCount', 'productionHistoryNotes', 'photoBase64', 'photoCapturedAtEpochMs', 'memberUids', 'updatedAt'])
+                           ) ||
+                           (
+                             request.auth.uid in existing().memberUids &&
+                             incoming().diff(existing()).affectedKeys().hasOnly(['memberUids', 'updatedAt'])
+                           )
+                         );
+        allow delete: if isSignedIn() && isValidId(canaryId) && request.auth.uid in existing().memberUids;
+      }
+
+      match /pairs/{pairId} {
+        allow get: if isSignedIn() && isValidId(pairId) && request.auth.uid in existing().memberUids;
+        allow list: if isSignedIn() && request.auth.uid in existing().memberUids;
+        allow create: if isSignedIn() &&
+                         isValidId(pairId) &&
+                         incoming().aviaryId == aviaryId &&
+                         incoming().userId == request.auth.uid &&
+                         request.auth.uid in incoming().memberUids &&
+                         incoming().keys().hasAll(['aviaryId', 'userId', 'memberUids', 'cageCode', 'sireId', 'sireName', 'sireRing', 'damId', 'damName', 'damRing', 'pairedDateEpochMs', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['aviaryId', 'userId', 'memberUids', 'cageCode', 'sireId', 'sireName', 'sireRing', 'damId', 'damName', 'damRing', 'pairedDateEpochMs', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidPair(incoming()) &&
+                         isAviaryMemberByParent(aviaryId);
+        allow update: if isSignedIn() &&
+                         isValidId(pairId) &&
+                         isValidPair(incoming()) &&
+                         incoming().aviaryId == existing().aviaryId &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         request.auth.uid in existing().memberUids && (
+                           incoming().diff(existing()).affectedKeys().hasOnly(['cageCode', 'sireId', 'sireName', 'sireRing', 'damId', 'damName', 'damRing', 'pairedDateEpochMs', 'status', 'notes', 'memberUids', 'updatedAt']) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly(['memberUids', 'updatedAt'])
+                         );
+        allow delete: if isSignedIn() && isValidId(pairId) && request.auth.uid in existing().memberUids;
+      }
+
+      match /clutches/{clutchId} {
+        allow get: if isSignedIn() && isValidId(clutchId) && request.auth.uid in existing().memberUids;
+        allow list: if isSignedIn() && request.auth.uid in existing().memberUids;
+        allow create: if isSignedIn() &&
+                         isValidId(clutchId) &&
+                         incoming().aviaryId == aviaryId &&
+                         incoming().userId == request.auth.uid &&
+                         request.auth.uid in incoming().memberUids &&
+                         incoming().keys().hasAll(['aviaryId', 'userId', 'memberUids', 'pairId', 'sireId', 'damId', 'cageCode', 'clutchNumber', 'eggCount', 'fertileCount', 'hatchedCount', 'fledgedCount', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['aviaryId', 'userId', 'memberUids', 'pairId', 'sireId', 'damId', 'cageCode', 'clutchNumber', 'eggCount', 'fertileCount', 'hatchedCount', 'fledgedCount', 'incubationStartEpochMs', 'expectedHatchEpochMs', 'actualHatchEpochMs', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidClutch(incoming()) &&
+                         isAviaryMemberByParent(aviaryId);
+        allow update: if isSignedIn() &&
+                         isValidId(clutchId) &&
+                         isValidClutch(incoming()) &&
+                         incoming().aviaryId == existing().aviaryId &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         request.auth.uid in existing().memberUids && (
+                           (
+                             existing().status != 'COMPLETED' &&
+                             existing().status != 'FAILED' &&
+                             incoming().diff(existing()).affectedKeys().hasOnly(['eggCount', 'fertileCount', 'hatchedCount', 'fledgedCount', 'incubationStartEpochMs', 'expectedHatchEpochMs', 'actualHatchEpochMs', 'status', 'notes', 'memberUids', 'updatedAt'])
+                           ) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly(['memberUids', 'updatedAt'])
+                         );
+        allow delete: if isSignedIn() && isValidId(clutchId) && request.auth.uid in existing().memberUids;
+      }
+
+      match /health_logs/{logId} {
+        allow get: if isSignedIn() && isValidId(logId) && request.auth.uid in existing().memberUids;
+        allow list: if isSignedIn() && request.auth.uid in existing().memberUids;
+        allow create: if isSignedIn() &&
+                         isValidId(logId) &&
+                         incoming().aviaryId == aviaryId &&
+                         incoming().userId == request.auth.uid &&
+                         request.auth.uid in incoming().memberUids &&
+                         incoming().keys().hasAll(['aviaryId', 'userId', 'memberUids', 'canaryId', 'canaryName', 'canaryRing', 'healthScore', 'previousScore', 'healthStatus', 'symptoms', 'actionTaken', 'recordedDateEpochMs', 'alertTriggered', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['aviaryId', 'userId', 'memberUids', 'canaryId', 'canaryName', 'canaryRing', 'healthScore', 'previousScore', 'healthStatus', 'symptoms', 'actionTaken', 'recordedDateEpochMs', 'alertTriggered', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidHealthLog(incoming()) &&
+                         isAviaryMemberByParent(aviaryId);
+        allow update: if isSignedIn() &&
+                         isValidId(logId) &&
+                         isValidHealthLog(incoming()) &&
+                         incoming().aviaryId == existing().aviaryId &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         request.auth.uid in existing().memberUids &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['memberUids', 'updatedAt']);
+        allow delete: if isSignedIn() && isValidId(logId) && request.auth.uid in existing().memberUids;
+      }
+
+      match /supplement_logs/{logId} {
+        allow get: if isSignedIn() && isValidId(logId) && request.auth.uid in existing().memberUids;
+        allow list: if isSignedIn() && request.auth.uid in existing().memberUids;
+        allow create: if isSignedIn() &&
+                         isValidId(logId) &&
+                         incoming().aviaryId == aviaryId &&
+                         incoming().userId == request.auth.uid &&
+                         request.auth.uid in incoming().memberUids &&
+                         incoming().keys().hasAll(['aviaryId', 'userId', 'memberUids', 'title', 'dosage', 'targetGroup', 'timeLabel', 'lastCompletedDate', 'active', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['aviaryId', 'userId', 'memberUids', 'title', 'dosage', 'targetGroup', 'timeLabel', 'lastCompletedDate', 'active', 'createdAt', 'updatedAt']) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidSupplementTask(incoming()) &&
+                         isAviaryMemberByParent(aviaryId);
+        allow update: if isSignedIn() &&
+                         isValidId(logId) &&
+                         isValidSupplementTask(incoming()) &&
+                         incoming().aviaryId == existing().aviaryId &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         request.auth.uid in existing().memberUids && (
+                           incoming().diff(existing()).affectedKeys().hasOnly(['title', 'dosage', 'targetGroup', 'timeLabel', 'lastCompletedDate', 'active', 'memberUids', 'updatedAt']) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly(['memberUids', 'updatedAt'])
+                         );
+        allow delete: if isSignedIn() && isValidId(logId) && request.auth.uid in existing().memberUids;
+      }
+    }
+  }
+}
