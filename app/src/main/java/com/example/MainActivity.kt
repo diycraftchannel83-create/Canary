@@ -255,7 +255,8 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
     val currentRoute = navBackStackEntry?.destination?.route ?: AppTab.DASHBOARD.route
 
     var healthTargetCanary by remember { mutableStateOf<Canary?>(null) }
-    var pendingExportRequest by remember { mutableStateOf<Pair<AviaryDashboardData, Boolean>?>(null) }
+    var pendingExportRequest by remember { mutableStateOf<Pair<AviaryDashboardData, Boolean>?>(null }
+    var pendingTab by remember { mutableStateOf<AppTab?>(null) }
 
     fun handleExportRequest(exportData: AviaryDashboardData, isExcel: Boolean) {
         if (AdMobManager.isRewardedInterstitialAvailable()) {
@@ -267,12 +268,39 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
     }
 
     fun navigateToTab(tab: AppTab) {
-        navController.navigate(tab.route) {
-            popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
+        // NavHost exists only after Firebase data reaches Success.
+        val destination = navController.currentDestination
+        if (destination == null) {
+            pendingTab = tab
+            return
+        }
+        val destinationExists = try {
+            navController.graph.findNode(tab.route) != null
+        } catch (_: IllegalStateException) {
+            false
+        }
+        if (!destinationExists) {
+            pendingTab = tab
+            return
+        }
+        try {
+            navController.navigate(tab.route) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
             }
-            launchSingleTop = true
-            restoreState = true
+            pendingTab = null
+        } catch (e: IllegalArgumentException) {
+            android.util.Log.w("CanaryNavigation", "Navigation to ${tab.route} deferred", e)
+            pendingTab = tab
+        }
+    }
+
+    LaunchedEffect(dashboardState, navBackStackEntry, pendingTab) {
+        val tab = pendingTab
+        if (dashboardState is UiState.Success && tab != null &&
+            navController.currentDestination != null) {
+            navigateToTab(tab)
         }
     }
 
