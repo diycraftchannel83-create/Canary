@@ -93,6 +93,7 @@ import com.example.ui.theme.KenariPedigreeTheme
 import com.example.ui.viewmodel.AviaryViewModel
 import com.example.ui.viewmodel.UiState
 import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -114,7 +115,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        BreedingNotificationHelper.ensureChannels(this)
+        try {
+            BreedingNotificationHelper.ensureChannels(this)
+        } catch (e: Exception) {
+            android.util.Log.w("KenariStartup", "Notification channels could not be initialized", e)
+        }
         setContent {
             KenariPedigreeTheme {
                 KenariPedigreeApp()
@@ -125,6 +130,20 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun KenariPedigreeApp() {
+    // Prevent a missing Firebase configuration from crashing the app immediately.
+    val firebaseConfigured = remember {
+        try {
+            FirebaseApp.getInstance()
+            true
+        } catch (e: IllegalStateException) {
+            false
+        }
+    }
+    if (!firebaseConfigured) {
+        FirebaseConfigurationRequiredScreen()
+        return
+    }
+
     var currentUser by remember { mutableStateOf(Firebase.auth.currentUser) }
 
     DisposableEffect(Unit) {
@@ -143,6 +162,27 @@ fun KenariPedigreeApp() {
     } else {
         key(user.uid) {
             AuthenticatedAviaryShell(currentUserId = user.uid)
+        }
+    }
+}
+
+@Composable
+private fun FirebaseConfigurationRequiredScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Konfigurasi Firebase belum tersedia", style = MaterialTheme.typography.titleLarge)
+            Text(
+                "Aplikasi dapat dibuka, tetapi login Google dan sinkronisasi cloud belum dapat digunakan. " +
+                    "Tambahkan google-services.json untuk aplikasi com.winsmediatama.kenaritasik, " +
+                    "kemudian build ulang.",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
