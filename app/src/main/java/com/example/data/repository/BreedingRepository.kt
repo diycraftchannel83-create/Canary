@@ -790,7 +790,7 @@ class BreedingRepository(
         }
     }
 
-    suspend fun uploadFarmLogo(aviaryId: String, imageUri: Uri): Result<String> {
+    suspend fun uploadFarmLogo(aviaryId: String, imageUri: Uri, mimeType: String): Result<String> {
         val docPath = "aviaries/$aviaryId"
         return try {
             val uid = requireUserId()
@@ -803,7 +803,7 @@ class BreedingRepository(
             val storageRef = FirebaseStorage.getInstance().reference
                 .child("aviaries/$aviaryId/farm_logo/logo")
             val metadata = StorageMetadata.Builder()
-                .setContentType("image/*")
+                .setContentType(mimeType.takeIf { it.startsWith("image/") } ?: "image/jpeg")
                 .build()
             storageRef.putFile(imageUri, metadata).await()
             val downloadUrl = storageRef.downloadUrl.await().toString()
