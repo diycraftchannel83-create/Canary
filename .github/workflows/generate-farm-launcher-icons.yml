@@ -1,0 +1,42 @@
+name: Generate Farm Launcher Icons
+
+on:
+  workflow_dispatch:
+    inputs:
+      logo_path:
+        description: 'Repository path to farm logo image (PNG/JPG/WebP)'
+        required: true
+        default: 'app/src/main/res/drawable/app_icon_canary_1795574368510.jpg'
+
+permissions:
+  contents: write
+
+jobs:
+  generate-icons:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install image processing
+        run: pip install Pillow
+
+      - name: Generate launcher icon sizes
+        run: python .github/scripts/generate_launcher_icons.py "${{ inputs.logo_path }}"
+
+      - name: Commit generated launcher icons
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/res/mipmap-* app/src/main/res/drawable-nodpi/farm_launcher_foreground.png
+          if git diff --cached --quiet; then
+            echo "Generated icons unchanged."
+          else
+            git commit -m "Generate launcher icons from farm logo"
+            git push
+          fi
