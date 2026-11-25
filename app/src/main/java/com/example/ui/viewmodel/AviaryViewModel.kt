@@ -15,6 +15,9 @@ import com.example.data.model.CanarySex
 import com.example.data.model.ClutchStatus
 import com.example.data.model.HealthLog
 import com.example.data.model.HealthStatus
+import com.example.data.model.InventoryStatus
+import com.example.data.model.OwnershipStatus
+import com.example.data.model.OwnershipSource
 import com.example.data.model.PairStatus
 import com.example.data.model.SupplementTask
 import com.example.data.model.UserProfile
@@ -295,6 +298,16 @@ class AviaryViewModel(
             }.onFailure {
                 _actionMessage.value = it.localizedMessage ?: "Gagal menyimpan data indukan."
             }
+        }
+    }
+
+    fun createInventoryCanary(aviary: Aviary, ringCode: String, name: String, sex: CanarySex, breed: String, featherColor: String, hatchDateEpochMs: Long, cageCode: String, inventoryStatus: InventoryStatus, ownershipStatus: OwnershipStatus, ownershipSource: OwnershipSource, acquiredDateEpochMs: Long, previousOwnerName: String, purchasePrice: Long, pedigreeConfidence: String, sireRing: String, damRing: String, lineageNotes: String, pedigreeDocumentNotes: String) {
+        viewModelScope.launch {
+            _isBusy.value = true
+            val result = repository.createInventoryCanary(aviary.id, aviary.memberUids, ringCode, name, sex, breed, featherColor, hatchDateEpochMs, cageCode, inventoryStatus, ownershipStatus, ownershipSource, acquiredDateEpochMs, previousOwnerName, purchasePrice, pedigreeConfidence, sireRing, damRing, lineageNotes, pedigreeDocumentNotes)
+            _isBusy.value = false
+            result.onSuccess { _actionMessage.value = "Burung baru berhasil ditambahkan ke inventaris." }
+                .onFailure { _actionMessage.value = it.localizedMessage ?: "Gagal menambahkan burung." }
         }
     }
 
