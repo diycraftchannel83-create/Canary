@@ -569,10 +569,10 @@ class AviaryViewModel(
         }
     }
 
-    fun uploadFarmLogo(aviaryId: String, imageUri: Uri, onDone: () -> Unit = {}) {
+    fun uploadFarmLogo(aviaryId: String, imageUri: Uri, mimeType: String, onDone: () -> Unit = {}) {
         viewModelScope.launch {
             _isBusy.value = true
-            val result = repository.uploadFarmLogo(aviaryId, imageUri)
+            val result = repository.uploadFarmLogo(aviaryId, imageUri, mimeType)
             _isBusy.value = false
             result.onSuccess {
                 _actionMessage.value = "Logo Farm berhasil diunggah dan disinkronkan ke tim."
