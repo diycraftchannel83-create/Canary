@@ -642,3 +642,5 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
         }
     }
 }
+
+}
