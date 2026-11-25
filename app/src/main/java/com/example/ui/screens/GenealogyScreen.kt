@@ -325,14 +325,14 @@ fun GenealogyScreen(
             allCanaries = data.canaries,
             isBusy = isBusy,
             onDismiss = { showFormDialog = false },
-            onSubmit = { ring, name, sex, breed, color, hatchMs, sId, dId, sRing, dRing, cage, bStatus, hStatus, hScore, notes, lineageNotes, clutchCnt, eggCnt, hatchCnt, fledgeCnt, prodNotes, newPhotoBase64 ->
+            onSubmit = { ring, name, sex, breed, color, hatchMs, sId, dId, sRing, dRing, cage, bStatus, hStatus, hScore, notes, lineageNotes, clutchCnt, eggCnt, hatchCnt, fledgeCnt, prodNotes, newPhotoBase64, externalSirePhotoBase64, externalDamPhotoBase64 ->
                 onSaveCanary(
                     editingCanary?.id,
                     editingCanary?.hasUploadedPhoto == true,
                     ring, name, sex, breed, color, hatchMs,
                     sId, dId, sRing, dRing, cage, bStatus, hStatus, hScore, notes,
                     lineageNotes, clutchCnt, eggCnt, hatchCnt, fledgeCnt, prodNotes,
-                    newPhotoBase64
+                    newPhotoBase64, externalSirePhotoBase64, externalDamPhotoBase64
                 ) {
                     showFormDialog = false
                 }
@@ -944,10 +944,7 @@ private fun CanaryFormDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                if (selectedSireId == null) {
                     ParentPhotoField(title = "Foto Indukan Jantan Eksternal", photoBase64 = extSirePhoto, onPick = { sirePhotoPicker.launch("image/*") })
-                }
-
                 }
 
                 // Dam picker
