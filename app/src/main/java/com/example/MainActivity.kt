@@ -112,7 +112,8 @@ private enum class AppTab(
     val unselectedIcon: ImageVector
 ) {
     DASHBOARD("dashboard", "Dasbor", Icons.Rounded.Dashboard, Icons.Outlined.Dashboard),
-    GENEALOGY("genealogy", "Silsilah", Icons.Rounded.AccountTree, Icons.Outlined.AccountTree),\n    INVENTORY("inventory", "Inventaris", Icons.Rounded.Inventory2, Icons.Outlined.Inventory2),
+    GENEALOGY("genealogy", "Silsilah", Icons.Rounded.AccountTree, Icons.Outlined.AccountTree),
+    INVENTORY("inventory", "Inventaris", Icons.Rounded.Inventory2, Icons.Outlined.Inventory2),
     BREEDING("breeding", "Produksi", Icons.Rounded.Egg, Icons.Outlined.Egg),
     CARE("care", "Perawatan", Icons.Rounded.HealthAndSafety, Icons.Outlined.HealthAndSafety),
     TEAM_REPORTS("team_reports", "Setting", Icons.Rounded.Settings, Icons.Outlined.Settings)
@@ -436,7 +437,7 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                                         GenealogyScreen(
                                             data = data,
                                             isBusy = isBusy,
-                                            onSaveCanary = { existingId, existingHasPhoto, ring, name, sex, breed, color, hatchMs, sId, dId, sRing, dRing, cage, bStatus, hStatus, hScore, notes, lineageNotes, recordedClutchCount, recordedEggCount, recordedHatchedCount, recordedFledgedCount, productionHistoryNotes, newPhotoBase64, onDone ->
+                                            onSaveCanary = { existingId, existingHasPhoto, ring, name, sex, breed, color, hatchMs, sId, dId, sRing, dRing, cage, bStatus, hStatus, hScore, notes, lineageNotes, recordedClutchCount, recordedEggCount, recordedHatchedCount, recordedFledgedCount, productionHistoryNotes, newPhotoBase64, externalSirePhotoBase64, externalDamPhotoBase64, onDone ->
                                                 val av = activeAviary ?: return@GenealogyScreen
                                                 viewModel.saveCanary(
                                                     aviary = av,
@@ -479,7 +480,8 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                                         )
                                     }
 
-                                    composable(AppTab.INVENTORY.route) {\n                                        InventoryScreen(data = data, isBusy = isBusy, onUpdateMetadata = { bird, status, ownership, source, acquiredMs, owner, price, confidence, pedigreeNotes ->
+                                    composable(AppTab.INVENTORY.route) {
+                                        InventoryScreen(data = data, isBusy = isBusy, onUpdateMetadata = { bird, status, ownership, source, acquiredMs, owner, price, confidence, pedigreeNotes ->
                                             activeAviary?.let { av -> viewModel.updateInventoryMetadata(av.id, bird.id, status.name, ownership.name, source.name, acquiredMs, owner, price, confidence, pedigreeNotes) }
                                         }, onCreateBird = { ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, pedigreeNotes ->
                                             activeAviary?.let { av -> viewModel.createInventoryCanary(av, ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, pedigreeNotes) }
