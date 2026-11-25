@@ -1,12 +1,10 @@
 package com.example.ui.screens
 
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -99,6 +97,8 @@ fun DashboardScreen(
     onSelectCanaryFilter: (String?) -> Unit,
     onToggleSupplementToday: (SupplementTask, Boolean) -> Unit,
     onSaveFarmSettings: (aviaryId: String?, farmName: String, farmAddress: String, farmPhone: String, onDone: () -> Unit) -> Unit,
+    onUploadFarmLogo: (aviaryId: String, imageUri: Uri, onDone: () -> Unit) -> Unit,
+    onDeleteFarmLogo: (aviaryId: String, onDone: () -> Unit) -> Unit,
     onNavigateToCare: () -> Unit,
     onNavigateToBreeding: () -> Unit,
     onExportPdf: () -> Unit,
@@ -107,33 +107,13 @@ fun DashboardScreen(
 ) {
     var showFarmSettingsDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val farmLogoPrefs = remember(context) {
-        context.getSharedPreferences("farm_profile_local", android.content.Context.MODE_PRIVATE)
-    }
-    var farmLogoUriString by remember {
-        mutableStateOf(farmLogoPrefs.getString("farm_logo_uri", null))
-    }
     val farmLogoPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
-        if (uri != null) {
-            try {
-                context.contentResolver.takePersistableUriPermission(
-                    uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (_: Exception) { /* GetContent grants temporary access; persisted access may not be supported. */ }
-            farmLogoUriString = uri.toString()
-            farmLogoPrefs.edit().putString("farm_logo_uri", uri.toString()).apply()
+        val aviaryId = data.activeAviary?.id.orEmpty()
+        if (uri != null && aviaryId.isNotBlank()) {
+            onUploadFarmLogo(aviaryId, uri) { }
         }
-    }
-    val farmLogoBitmap = remember(farmLogoUriString) {
-        try {
-            farmLogoUriString?.let { uriString ->
-                context.contentResolver.openInputStream(Uri.parse(uriString))?.use {
-                    BitmapFactory.decodeStream(it)?.asImageBitmap()
-                }
-            }
-        } catch (_: Exception) { null }
     }
     val activeIncubations = data.clutches.filter {
         it.statusEnum == ClutchStatus.INCUBATING && (it.incubationStartEpochMs ?: 0L) > 0L
@@ -271,17 +251,17 @@ fun DashboardScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    if (farmLogoBitmap != null) {
-                                        Image(
-                                            bitmap = farmLogoBitmap,
+                                    if (!av?.farmLogoUrl.isNullOrBlank()) {
+                                        AsyncImage(
+                                            model = av?.farmLogoUrl,
                                             contentDescription = "Logo $farmTitle",
-                                            modifier = Modifier.size(46.dp).clip(CircleShape)
+                                            modifier = Modifier.size(48.dp).clip(CircleShape)
                                         )
                                     } else {
                                         Surface(
                                             color = Color.White.copy(alpha = 0.16f),
                                             shape = CircleShape,
-                                            modifier = Modifier.size(46.dp)
+                                            modifier = Modifier.size(48.dp)
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
                                                 Icon(
@@ -723,10 +703,10 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        if (farmLogoBitmap != null) {
-                            Image(
-                                bitmap = farmLogoBitmap,
-                                contentDescription = "Logo farm saat ini",
+                        if (!av?.farmLogoUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = av?.farmLogoUrl,
+                                contentDescription = "Logo farm tersimpan di cloud",
                                 modifier = Modifier.size(64.dp).clip(CircleShape)
                             )
                         } else {
@@ -741,16 +721,19 @@ fun DashboardScreen(
                             }
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Button(onClick = { farmLogoPicker.launch(arrayOf("image/*")) }) {
-                                Text(if (farmLogoBitmap == null) "Pilih Logo Farm" else "Ganti Logo")
+                            Button(
+                                onClick = { farmLogoPicker.launch(arrayOf("image/*")) },
+                                enabled = !isBusy && !av?.id.isNullOrBlank()
+                            ) {
+                                Text(if (av?.farmLogoUrl.isNullOrBlank()) "Pilih Logo Farm" else "Ganti Logo")
                             }
-                            if (farmLogoUriString != null) {
-                                TextButton(onClick = {
-                                    farmLogoUriString = null
-                                    farmLogoPrefs.edit().remove("farm_logo_uri").apply()
-                                }) {
-                                    Text("Hapus Logo")
-                                }
+                            if (!av?.farmLogoUrl.isNullOrBlank()) {
+                                TextButton(
+                                    onClick = {
+                                        av?.id?.let { onDeleteFarmLogo(it) { } }
+                                    },
+                                    enabled = !isBusy
+                                ) { Text("Hapus Logo") }
                             }
                         }
                     }
