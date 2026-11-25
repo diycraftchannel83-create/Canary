@@ -7,6 +7,21 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.ServerTimestamp
 
+enum class OwnershipSource(val labelId: String) {
+    PURCHASE("Pembelian"), SELF_BRED("Hasil breeding sendiri"), TRANSFER("Transfer"), UNKNOWN("Tidak diketahui");
+    companion object { fun fromRaw(raw: String?) = entries.firstOrNull { it.name == raw } ?: UNKNOWN }
+}
+
+enum class InventoryStatus(val labelId: String) {
+    GROWER("Grower / belum matang"), CANDIDATE("Kandidat indukan"), READY("Siap breeding"), PAUSED("Istirahat / recovery"), QUARANTINE("Karantina / observasi"), RETIRED("Pensiun");
+    companion object { fun fromRaw(raw: String?) = entries.firstOrNull { it.name == raw } ?: CANDIDATE }
+}
+
+enum class OwnershipStatus(val labelId: String) {
+    OWNED("Dimiliki"), SOLD("Dijual"), TRANSFERRED("Dipindahkan"), LOST("Hilang"), DECEASED("Mati");
+    companion object { fun fromRaw(raw: String?) = entries.firstOrNull { it.name == raw } ?: OWNED }
+}
+
 enum class CanarySex(val labelId: String) {
     MALE("Jantan"),
     FEMALE("Betina");
@@ -130,6 +145,14 @@ data class Canary(
     val healthScore: Long = 90L,
     val notes: String = "",
     val lineageNotes: String = "",
+    val inventoryStatus: String = InventoryStatus.CANDIDATE.name,
+    val ownershipStatus: String = OwnershipStatus.OWNED.name,
+    val ownershipSource: String = OwnershipSource.UNKNOWN.name,
+    val acquiredDateEpochMs: Long = 0L,
+    val previousOwnerName: String = "",
+    val purchasePrice: Long = 0L,
+    val pedigreeConfidence: String = "PARTIAL",
+    val pedigreeDocumentNotes: String = "",
     val recordedClutchCount: Long = 0L,
     val recordedEggCount: Long = 0L,
     val recordedHatchedCount: Long = 0L,
@@ -144,6 +167,9 @@ data class Canary(
     val breedingStatusEnum: BreedingStatus get() = BreedingStatus.fromRaw(breedingStatus)
     val healthStatusEnum: HealthStatus get() = HealthStatus.fromRaw(healthStatus)
     val hasUploadedPhoto: Boolean get() = !photoBase64.isNullOrBlank()
+    val inventoryStatusEnum: InventoryStatus get() = InventoryStatus.fromRaw(inventoryStatus)
+    val ownershipStatusEnum: OwnershipStatus get() = OwnershipStatus.fromRaw(ownershipStatus)
+    val ownershipSourceEnum: OwnershipSource get() = OwnershipSource.fromRaw(ownershipSource)
 
     fun toCreateMap(): Map<String, Any> {
         val raw = mutableMapOf<String, Any?>(
@@ -166,6 +192,14 @@ data class Canary(
             "healthScore" to healthScore.coerceIn(0L, 100L),
             "notes" to notes.trim().take(500),
             "lineageNotes" to lineageNotes.trim().take(300),
+            "inventoryStatus" to inventoryStatusEnum.name,
+            "ownershipStatus" to ownershipStatusEnum.name,
+            "ownershipSource" to ownershipSourceEnum.name,
+            "acquiredDateEpochMs" to acquiredDateEpochMs.coerceAtLeast(0L),
+            "previousOwnerName" to previousOwnerName.trim().take(100),
+            "purchasePrice" to purchasePrice.coerceAtLeast(0L),
+            "pedigreeConfidence" to pedigreeConfidence.take(20),
+            "pedigreeDocumentNotes" to pedigreeDocumentNotes.trim().take(500),
             "recordedClutchCount" to recordedClutchCount.coerceIn(0L, 500L),
             "recordedEggCount" to recordedEggCount.coerceIn(0L, 2000L),
             "recordedHatchedCount" to recordedHatchedCount.coerceIn(0L, 2000L),
