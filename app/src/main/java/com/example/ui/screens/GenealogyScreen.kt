@@ -984,10 +984,7 @@ private fun CanaryFormDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                if (selectedDamId == null) {
                     ParentPhotoField(title = "Foto Indukan Betina Eksternal", photoBase64 = extDamPhoto, onPick = { damPhotoPicker.launch("image/*") })
-                }
-
                 }
 
             }
