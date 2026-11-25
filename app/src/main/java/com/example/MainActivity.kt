@@ -411,6 +411,12 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                                             onSaveFarmSettings = { aviaryId, fName, fAddr, fPhone, onDone ->
                                                 viewModel.updateFarmSettings(aviaryId, fName, fAddr, fPhone, onDone)
                                             },
+                                            onUploadFarmLogo = { aviaryId, imageUri, onDone ->
+                                                viewModel.uploadFarmLogo(aviaryId, imageUri, onDone)
+                                            },
+                                            onDeleteFarmLogo = { aviaryId, onDone ->
+                                                viewModel.deleteFarmLogo(aviaryId, onDone)
+                                            },
                                             onNavigateToCare = { navigateToTab(AppTab.CARE) },
                                             onNavigateToBreeding = { navigateToTab(AppTab.BREEDING) },
                                             onExportPdf = { handleExportRequest(data, isExcel = false) },
