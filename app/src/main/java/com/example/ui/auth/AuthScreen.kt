@@ -76,6 +76,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
+private fun Context.googleWebClientId(): String? {
+    val resourceId = resources.getIdentifier("default_web_client_id", "string", packageName)
+    if (resourceId == 0) return null
+    return runCatching { getString(resourceId) }.getOrNull()?.takeIf { it.isNotBlank() }
+}
+
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
@@ -93,9 +99,8 @@ fun attemptAutoSignIn(
         onAuthSuccess()
         return
     }
-    val clientId = try {
-        context.getString(R.string.default_web_client_id)
-    } catch (_: Exception) {
+    val clientId = context.googleWebClientId()
+    if (clientId == null) {
         onUnauthenticated()
         return
     }
@@ -139,10 +144,9 @@ fun onGoogleSignInClicked(
         onAuthError("Konteks aktivitas tidak ditemukan untuk login Google.")
         return
     }
-    val clientId = try {
-        context.getString(R.string.default_web_client_id)
-    } catch (_: Exception) {
-        onAuthError("Konfigurasi Google Sign-In tidak ditemukan.")
+    val clientId = context.googleWebClientId()
+    if (clientId == null) {
+        onAuthError("Konfigurasi Google Sign-In tidak ditemukan. Pastikan google-services.json tersedia.")
         return
     }
     val signInOption = GetSignInWithGoogleOption.Builder(serverClientId = clientId).build()
