@@ -977,20 +977,13 @@ private fun CanaryFormDialog(
                     )
                 }
 
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Catatan Genetika / Karakter") },
-                    maxLines = 3,
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
                     onSubmit(
-                        ringCode, name, sex, breed, featherColor, hatchDateMs,
+                        ringCode, name.ifBlank { ringCode }, sex, breed, featherColor, hatchDateMs,
                         selectedSireId, selectedDamId, extSireRing.ifBlank { null }, extDamRing.ifBlank { null },
                         cageCode, breedingStatus, healthStatus, healthScore, notes,
                         lineageNotes,
@@ -1002,7 +995,7 @@ private fun CanaryFormDialog(
                         if (alreadyUploadedPhoto) null else pendingPhotoBase64
                     )
                 },
-                enabled = !isBusy && ringCode.isNotBlank() && name.isNotBlank() && breed.isNotBlank(),
+                enabled = !isBusy && ringCode.isNotBlank() && breed.isNotBlank(),
                 modifier = Modifier.testTag("save_canary_btn")
             ) {
                 Text(if (isBusy) "Menyimpan..." else "Simpan")
