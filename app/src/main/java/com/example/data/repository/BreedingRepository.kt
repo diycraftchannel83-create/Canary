@@ -358,7 +358,9 @@ class BreedingRepository(
         recordedHatchedCount: Int,
         recordedFledgedCount: Int,
         productionHistoryNotes: String,
-        newPhotoBase64: String?
+        newPhotoBase64: String?,
+        externalSirePhotoBase64: String?,
+        externalDamPhotoBase64: String?
     ): Result<Unit> {
         var docPath = "aviaries/$aviaryId/canaries"
         return try {
@@ -371,6 +373,8 @@ class BreedingRepository(
             val colRef = db.collection("aviaries").document(aviaryId).collection("canaries")
             val effectiveMembers = (memberUids + uid).distinct().take(20)
             val cleanPhoto = newPhotoBase64?.takeIf { it.length >= 100 }?.take(350_000)
+            val cleanExternalSirePhoto = externalSirePhotoBase64?.takeIf { it.length >= 100 }?.take(350_000)
+            val cleanExternalDamPhoto = externalDamPhotoBase64?.takeIf { it.length >= 100 }?.take(350_000)
             if (existingId.isNullOrBlank()) {
                 val docRef = colRef.document()
                 docPath = docRef.path
@@ -388,6 +392,8 @@ class BreedingRepository(
                     damId = damId,
                     sireRing = sireRing,
                     damRing = damRing,
+                    externalSirePhotoBase64 = cleanExternalSirePhoto,
+                    externalDamPhotoBase64 = cleanExternalDamPhoto,
                     cageCode = cageCode,
                     breedingStatus = breedingStatus.name,
                     healthStatus = healthStatus.name,
@@ -431,6 +437,8 @@ class BreedingRepository(
                 damId?.takeIf { it.isNotBlank() }?.let { updates["damId"] = it.take(128) }
                 sireRing?.takeIf { it.isNotBlank() }?.let { updates["sireRing"] = it.take(30) }
                 damRing?.takeIf { it.isNotBlank() }?.let { updates["damRing"] = it.take(30) }
+                cleanExternalSirePhoto?.let { updates["externalSirePhotoBase64"] = it }
+                cleanExternalDamPhoto?.let { updates["externalDamPhotoBase64"] = it }
                 // Write-once photo upload: only permitted when no photo has been uploaded yet
                 if (!existingHasPhoto && cleanPhoto != null) {
                     updates["photoBase64"] = cleanPhoto
