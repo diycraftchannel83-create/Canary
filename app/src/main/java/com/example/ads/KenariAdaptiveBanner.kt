@@ -32,7 +32,7 @@ fun KenariAdaptiveBanner(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             factory = { ctx ->
                 AdView(ctx).apply {
-                    adUnitId = adUnitId
+                    setAdUnitId(adUnitId)
                     val displayMetrics = ctx.resources.displayMetrics
                     val widthDp = (displayMetrics.widthPixels / displayMetrics.density).toInt()
                     setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, widthDp))
