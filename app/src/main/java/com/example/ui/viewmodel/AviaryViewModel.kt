@@ -259,6 +259,8 @@ class AviaryViewModel(
         recordedFledgedCount: Int,
         productionHistoryNotes: String,
         newPhotoBase64: String?,
+        externalSirePhotoBase64: String?,
+        externalDamPhotoBase64: String?,
         onDone: () -> Unit
     ) {
         viewModelScope.launch {
@@ -289,7 +291,9 @@ class AviaryViewModel(
                 recordedHatchedCount = recordedHatchedCount,
                 recordedFledgedCount = recordedFledgedCount,
                 productionHistoryNotes = productionHistoryNotes,
-                newPhotoBase64 = newPhotoBase64
+                newPhotoBase64 = newPhotoBase64,
+                externalSirePhotoBase64 = externalSirePhotoBase64,
+                externalDamPhotoBase64 = externalDamPhotoBase64
             )
             _isBusy.value = false
             res.onSuccess {
