@@ -114,7 +114,7 @@ fun DashboardScreen(
         mutableStateOf(farmLogoPrefs.getString("farm_logo_uri", null))
     }
     val farmLogoPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
+        ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
             try {
@@ -741,7 +741,7 @@ fun DashboardScreen(
                             }
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Button(onClick = { farmLogoPicker.launch("image/*") }) {
+                            Button(onClick = { farmLogoPicker.launch(arrayOf("image/*")) }) {
                                 Text(if (farmLogoBitmap == null) "Pilih Logo Farm" else "Ganti Logo")
                             }
                             if (farmLogoUriString != null) {
