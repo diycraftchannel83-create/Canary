@@ -864,6 +864,8 @@ private fun ClutchFormDialog(
     var status by remember { mutableStateOf(initial?.statusEnum ?: ClutchStatus.INCUBATING) }
     var notes by remember { mutableStateOf(initial?.notes ?: "") }
     var showDatePicker by remember { mutableStateOf(false) }
+    var actualHatchMs by remember { mutableStateOf(initial?.actualHatchEpochMs) }
+    var showActualHatchPicker by remember { mutableStateOf(false) }
 
     val expectedHatch = if (hasIncubationDate) {
         IncubationCalculator.calculate(incubationStartMs).expectedHatchEpochMs
@@ -917,9 +919,15 @@ private fun ClutchFormDialog(
                     Icon(Icons.Rounded.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        if (hasIncubationDate) "Mulai Mengeram: ${IncubationCalculator.formatDate(incubationStartMs)}"
-                        else "Pilih Tanggal Mulai Mengeram"
+                        if (hasIncubationDate) "Tanggal Bertelur / Mulai Mengeram: ${IncubationCalculator.formatDate(incubationStartMs)}"
+                        else "Pilih Tanggal Bertelur / Mulai Mengeram"
                     )
+                }
+
+                OutlinedButton(onClick = { showActualHatchPicker = true }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Rounded.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(actualHatchMs?.let { "Tanggal Menetas Aktual: ${IncubationCalculator.formatDate(it)}" } ?: "Catat Tanggal Menetas Aktual (Opsional)")
                 }
 
                 expectedHatch?.let { expMs ->
@@ -955,7 +963,7 @@ private fun ClutchFormDialog(
             Button(
                 onClick = {
                     val actualHatch = if (status == ClutchStatus.HATCHED || status == ClutchStatus.COMPLETED) {
-                        initial?.actualHatchEpochMs ?: System.currentTimeMillis()
+                        actualHatchMs ?: System.currentTimeMillis()
                     } else null
                     onSubmit(
                         clutchNum,
@@ -979,6 +987,20 @@ private fun ClutchFormDialog(
             TextButton(onClick = onDismiss) { Text("Batal") }
         }
     )
+
+    if (showActualHatchPicker) {
+        val state = rememberDatePickerState(initialSelectedDateMillis = actualHatchMs ?: System.currentTimeMillis())
+        DatePickerDialog(
+            onDismissRequest = { showActualHatchPicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let { actualHatchMs = IncubationCalculator.normalizeToStartOfDay(it) }
+                    showActualHatchPicker = false
+                }) { Text("Pilih") }
+            },
+            dismissButton = { TextButton(onClick = { showActualHatchPicker = false }) { Text("Batal") } }
+        ) { DatePicker(state = state) }
+    }
 
     if (showDatePicker) {
         val state = rememberDatePickerState(initialSelectedDateMillis = incubationStartMs)
