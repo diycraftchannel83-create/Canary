@@ -48,11 +48,12 @@ android {
       keyAlias = System.getenv("ANDROID_KEY_ALIAS") ?: "kenari-upload"
       keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
     }
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
+    create("ciDebug") {
+      val ciKeystorePath = System.getenv("CI_DEBUG_KEYSTORE_PATH")
+      if (!ciKeystorePath.isNullOrBlank()) storeFile = file(ciKeystorePath)
+      storePassword = System.getenv("CI_DEBUG_KEYSTORE_PASSWORD") ?: "android"
+      keyAlias = System.getenv("CI_DEBUG_KEY_ALIAS") ?: "androiddebugkey"
+      keyPassword = System.getenv("CI_DEBUG_KEY_PASSWORD") ?: "android"
     }
   }
 
@@ -66,9 +67,8 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
-      // Use Android's generated debug keystore in CI; the custom debugConfig points to
-      // a repository-local debug.keystore which is not available on GitHub runners.
-      signingConfig = signingConfigs.getByName("debug")
+      // Use persistent CI signing when configured; fall back to local standard debug signing.
+      signingConfig = if (System.getenv("CI_DEBUG_KEYSTORE_PATH").isNullOrBlank()) signingConfigs.getByName("debug") else signingConfigs.getByName("ciDebug")
     }
   }
   compileOptions {
