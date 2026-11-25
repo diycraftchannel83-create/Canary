@@ -80,6 +80,10 @@ import com.example.ads.AdMobManager
 import com.example.ads.KenariAdaptiveBanner
 import com.example.ads.findHostActivity
 import com.example.data.model.Canary
+import com.example.data.model.CanarySex
+import com.example.data.model.InventoryStatus
+import com.example.data.model.OwnershipStatus
+import com.example.data.model.OwnershipSource
 import com.example.data.repository.BreedingRepository
 import com.example.notifications.BreedingNotificationHelper
 import com.example.ui.viewmodel.AviaryDashboardData
