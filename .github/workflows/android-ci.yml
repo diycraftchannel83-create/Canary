@@ -70,10 +70,10 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
-          ANDROID_KEYSTORE_PATH: ${{ env.ANDROID_KEYSTORE_PATH }}
+          ANDROID_KEYSTORE_PATH: $RUNNER_TEMP/keystore/kenari-release-key.jks
         run: |
-          if [ -z "$ANDROID_KEYSTORE_PATH" ]; then
-            echo "Signing secrets unavailable; release build skipped."
+          if [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ] || [ -z "$ANDROID_STORE_PASSWORD" ] || [ ! -f "$ANDROID_KEYSTORE_PATH" ]; then
+            echo "Release signing secrets or keystore unavailable; release build skipped."
             exit 0
           fi
           gradle assembleRelease bundleRelease --stacktrace
