@@ -81,6 +81,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.R
+import com.example.ads.AdMobManager
 import com.example.data.model.BreedingClutch
 import com.example.data.model.BreedingStatus
 import com.example.data.model.Canary
@@ -825,6 +826,7 @@ private fun CanaryFormDialog(
         try {
             val (_, uri) = CanaryPhotoUtils.createCameraCaptureFile(context)
             pendingCaptureUri = uri
+            AdMobManager.suppressNextAppOpen()
             takePictureLauncher.launch(uri)
         } catch (e: Exception) {
             cameraError = "Kamera tidak tersedia: ${e.localizedMessage}"

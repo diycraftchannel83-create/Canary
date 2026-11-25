@@ -14,6 +14,11 @@
 -dontwarn com.google.errorprone.annotations.**
 -dontwarn javax.annotation.**
 
-# Keep BroadcastReceiver registered in AndroidManifest.xml
+# Keep BroadcastReceiver & Application registered in AndroidManifest.xml
 -keep class com.example.notifications.BreedingReminderReceiver { *; }
+-keep class com.example.KenariTasikApplication { *; }
+
+# Keep Google Mobile Ads SDK callbacks
+-keep class com.google.android.gms.ads.** { *; }
+
 

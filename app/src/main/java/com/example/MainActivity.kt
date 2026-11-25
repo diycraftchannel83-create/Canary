@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Egg
 import androidx.compose.material.icons.rounded.HealthAndSafety
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -46,6 +47,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -59,6 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -71,9 +74,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.ads.AdMobManager
+import com.example.ads.findHostActivity
 import com.example.data.model.Canary
 import com.example.data.repository.BreedingRepository
 import com.example.notifications.BreedingNotificationHelper
+import com.example.ui.viewmodel.AviaryDashboardData
+import kotlinx.coroutines.launch
 import com.example.ui.auth.AuthScreen
 import com.example.ui.auth.signOutFromApp
 import com.example.ui.screens.BreedingScreen
@@ -199,6 +206,16 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
     val currentRoute = navBackStackEntry?.destination?.route ?: AppTab.DASHBOARD.route
 
     var healthTargetCanary by remember { mutableStateOf<Canary?>(null) }
+    var pendingExportRequest by remember { mutableStateOf<Pair<AviaryDashboardData, Boolean>?>(null) }
+
+    fun handleExportRequest(exportData: AviaryDashboardData, isExcel: Boolean) {
+        if (AdMobManager.isRewardedInterstitialAvailable()) {
+            pendingExportRequest = exportData to isExcel
+        } else {
+            AdMobManager.loadRewardedInterstitialAd(context)
+            viewModel.exportAndShareReport(context, exportData, isExcel = isExcel)
+        }
+    }
 
     fun navigateToTab(tab: AppTab) {
         navController.navigate(tab.route) {
@@ -345,8 +362,8 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                                             },
                                             onNavigateToCare = { navigateToTab(AppTab.CARE) },
                                             onNavigateToBreeding = { navigateToTab(AppTab.BREEDING) },
-                                            onExportPdf = { viewModel.exportAndShareReport(context, data, isExcel = false) },
-                                            onExportExcel = { viewModel.exportAndShareReport(context, data, isExcel = true) },
+                                            onExportPdf = { handleExportRequest(data, isExcel = false) },
+                                            onExportExcel = { handleExportRequest(data, isExcel = true) },
                                             onSignOut = { signOutFromApp(credentialManager, scope) }
                                         )
                                     }
@@ -486,8 +503,8 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                                             },
                                             onSwitchAviary = viewModel::switchAviary,
                                             onJoinAviaryByCode = viewModel::joinAviaryByCode,
-                                            onExportPdf = { viewModel.exportAndShareReport(context, data, isExcel = false) },
-                                            onExportExcel = { viewModel.exportAndShareReport(context, data, isExcel = true) }
+                                            onExportPdf = { handleExportRequest(data, isExcel = false) },
+                                            onExportExcel = { handleExportRequest(data, isExcel = true) }
                                         )
                                     }
                                 }
@@ -496,6 +513,58 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                     }
                 }
             }
+        }
+
+        pendingExportRequest?.let { (exportData, isExcel) ->
+            val formatLabel = if (isExcel) "Excel (.xlsx)" else "PDF"
+            AlertDialog(
+                onDismissRequest = { pendingExportRequest = null },
+                title = { Text("Ekspor Laporan $formatLabel") },
+                text = {
+                    Text(
+                        "Tonton iklan singkat untuk mendukung Kenari Tasikmalaya sekaligus mengunduh laporan $formatLabel aviary Anda."
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            pendingExportRequest = null
+                            val hostActivity = context.findHostActivity()
+                            if (hostActivity == null) {
+                                viewModel.exportAndShareReport(context, exportData, isExcel = isExcel)
+                            } else {
+                                AdMobManager.showRewardedInterstitialAd(
+                                    activity = hostActivity,
+                                    onRewardEarned = {
+                                        viewModel.exportAndShareReport(context, exportData, isExcel = isExcel)
+                                    },
+                                    onDismissedWithoutReward = {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "Tonton iklan hingga selesai untuk mengekspor laporan $formatLabel."
+                                            )
+                                        }
+                                    },
+                                    onAdUnavailableOrFailed = {
+                                        viewModel.exportAndShareReport(context, exportData, isExcel = isExcel)
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier.testTag("confirm_rewarded_ad_export_btn")
+                    ) {
+                        Text("Tonton Iklan & Ekspor")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { pendingExportRequest = null },
+                        modifier = Modifier.testTag("cancel_rewarded_ad_export_btn")
+                    ) {
+                        Text("Batal")
+                    }
+                }
+            )
         }
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ads.AdMobManager
 import com.example.data.model.Aviary
 import com.example.data.model.BreedingClutch
 import com.example.data.model.BreedingPair
@@ -634,6 +635,7 @@ class AviaryViewModel(
                     "application/pdf"
                 }
                 val label = if (isExcel) "Bagikan Laporan Excel (.xlsx)" else "Bagikan Laporan PDF"
+                AdMobManager.suppressNextAppOpen()
                 ReportExporter.shareExportedFile(context, file, mime, label)
             } catch (e: Exception) {
                 _actionMessage.value = "Gagal membuat laporan: ${e.localizedMessage}"

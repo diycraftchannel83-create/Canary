@@ -1,4 +1,5 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -20,6 +21,19 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    val envProps = Properties().apply {
+      listOf(".env.example", ".env").forEach { fileName ->
+        val f = rootProject.file(fileName)
+        if (f.exists()) {
+          f.inputStream().use { load(it) }
+        }
+      }
+    }
+    manifestPlaceholders["ADMOB_APP_ID"] = envProps
+      .getProperty("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+      .trim()
+      .trim('"')
   }
 
   // Do not remove or modify these signingConfigs. They are necessary for building, installing,
@@ -101,6 +115,7 @@ dependencies {
   // implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
+  implementation(libs.androidx.lifecycle.process)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.androidx.navigation.compose)
   // implementation(libs.androidx.room.ktx)
@@ -113,6 +128,7 @@ dependencies {
   implementation(libs.androidx.credentials)
   implementation(libs.androidx.credentials.play.services)
   implementation(libs.googleid)
+  implementation(libs.play.services.ads)
   // implementation(libs.firebase.appcheck.recaptcha)
   // implementation(libs.firebase.appcheck.debug)
   implementation(libs.kotlinx.coroutines.android)

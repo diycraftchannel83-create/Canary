@@ -31,6 +31,19 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `admob unit ids match requested App Open and Rewarded Interstitial IDs`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals(
+            "ca-app-pub-1254774552944426/9533896500",
+            context.getString(R.string.admob_app_open_unit_id)
+        )
+        assertEquals(
+            "ca-app-pub-1254774552944426/5741489179",
+            context.getString(R.string.admob_rewarded_interstitial_unit_id)
+        )
+    }
+
+    @Test
     fun `incubation calculator computes 21 day milestones accurately`() {
         val day0 = IncubationCalculator.normalizeToStartOfDay(1_732_000_000_000L)
         val day10 = day0 + 10L * IncubationCalculator.DAY_MS
