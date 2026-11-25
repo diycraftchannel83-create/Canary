@@ -58,12 +58,16 @@ jobs:
 
       - name: Print CI debug keystore SHA-1 and SHA-256
         run: |
-          DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
+          DEBUG_KEYSTORE="$HOME/.config/.android/debug.keystore"
           if [ ! -f "$DEBUG_KEYSTORE" ]; then
-            echo "ERROR: CI debug keystore not found at $DEBUG_KEYSTORE"
-            find "$HOME" -name debug.keystore -type f 2>/dev/null || true
+            DEBUG_KEYSTORE="$(find "$HOME" -type f -name debug.keystore 2>/dev/null | head -n 1)"
+          fi
+          if [ -z "$DEBUG_KEYSTORE" ] || [ ! -f "$DEBUG_KEYSTORE" ]; then
+            echo "ERROR: Cannot locate CI debug keystore under HOME."
+            find "$HOME" -type f -name "*.keystore" -o -name "*.jks" 2>/dev/null || true
             exit 1
           fi
+          echo "Using CI debug keystore: $DEBUG_KEYSTORE"
           keytool -list -v -keystore "$DEBUG_KEYSTORE" -storepass android -alias androiddebugkey | grep -E "SHA1:|SHA256:"
           echo "NOTE: This fingerprint belongs to the runner-generated debug keystore for this workflow run."
 
