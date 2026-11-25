@@ -71,8 +71,22 @@ jobs:
             echo "CI_DEBUG_KEY_PASSWORD=$CI_DEBUG_KEY_PASSWORD" >> "$GITHUB_ENV"
           fi
 
-      - name: Build debug APK
-        run: gradle assembleDebug --stacktrace
+      - name: Build debug APK (retry transient Maven rate limits)
+        run: |
+          set -e
+          for attempt in 1 2 3 4; do
+            echo "Debug build attempt $attempt/4"
+            if gradle assembleDebug --stacktrace; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              delay=$((attempt * 45))
+              echo "Build failed; waiting ${delay}s before retry (Maven Central may be rate-limiting)."
+              sleep "$delay"
+            fi
+          done
+          echo "::error::Debug build failed after retries."
+          exit 1
 
       - name: Print CI debug keystore SHA-1 and SHA-256
         env:
@@ -140,13 +154,16 @@ jobs:
           gradle assembleRelease bundleRelease --stacktrace
 
       - name: Upload debug APK
-        if: always()
+        if: always() && hashFiles('app/build/outputs/apk/debug/app-debug.apk') != ''
         uses: actions/upload-artifact@v4
         with:
           name: Kenari-Tasikmalaya-debug
           path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 14
+      - name: Report debug APK unavailable
+        if: always() && hashFiles('app/build/outputs/apk/debug/app-debug.apk') == ''
+        run: echo "Debug APK was not generated. Check the Gradle build step above for the real failure."
 
       - name: Upload signed release outputs
         if: github.event_name != 'pull_request' && (hashFiles('app/build/outputs/apk/release/app-release.apk') != '' || hashFiles('app/build/outputs/bundle/release/app-release.aab') != '')
