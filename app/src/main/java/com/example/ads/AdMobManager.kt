@@ -76,12 +76,11 @@ object AdMobManager : DefaultLifecycleObserver, Application.ActivityLifecycleCal
 
         scope.launch {
             try {
-                MobileAds.initialize(application) {
-                    scope.launch {
-                        withContext(Dispatchers.Main) {
-                            loadAppOpenAd(application)
-                            loadRewardedInterstitialAd(application)
-                        }
+                withContext(Dispatchers.Main) {
+                    MobileAds.initialize(application) {
+                        loadAppOpenAd(application)
+                        loadRewardedInterstitialAd(application)
+                        Log.d(TAG, "MobileAds initialization complete")
                     }
                 }
             } catch (t: Throwable) {
