@@ -786,9 +786,9 @@ private fun CanaryFormDialog(
     var selectedSireId by remember { mutableStateOf(initial?.sireId) }
     var selectedDamId by remember { mutableStateOf(initial?.damId) }
     var extSireRing by remember { mutableStateOf(initial?.sireRing ?: "") }
-    var extDamRing by remember { mutableStateOf(initial?.damRing ?: "")
+    var extDamRing by remember { mutableStateOf(initial?.damRing ?: "") }
     var extSirePhoto by remember(initial?.id) { mutableStateOf(initial?.externalSirePhotoBase64) }
-    var extDamPhoto by remember(initial?.id) { mutableStateOf(initial?.externalDamPhotoBase64) } }
+    var extDamPhoto by remember(initial?.id) { mutableStateOf(initial?.externalDamPhotoBase64) }
     var breedingStatus by remember { mutableStateOf(initial?.breedingStatusEnum ?: BreedingStatus.ACTIVE) }
     var healthStatus by remember { mutableStateOf(initial?.healthStatusEnum ?: HealthStatus.HEALTHY) }
     var healthScore by remember { mutableIntStateOf((initial?.healthScore ?: 90L).toInt()) }
@@ -802,10 +802,8 @@ private fun CanaryFormDialog(
     var showDatePicker by remember { mutableStateOf(false) }
     var sireMenuOpen by remember { mutableStateOf(false) }
     var damMenuOpen by remember { mutableStateOf(false) }
-    var pickingSirePhoto by remember { mutableStateOf(false) }
-    var pickingDamPhoto by remember { mutableStateOf(false) }
     val sirePhotoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { extSirePhoto = CanaryPhotoUtils.encodeCapturedPhotoToBase64(context, it) } }
-    val damPhotoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { extDamPhoto = CanaryPhotoUtils.encodeCapturedPhotoToBase64(context, it) } } }
+    val damPhotoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { extDamPhoto = CanaryPhotoUtils.encodeCapturedPhotoToBase64(context, it) } }
 
     var pendingPhotoBase64 by remember(initial?.id) { mutableStateOf<String?>(null) }
     var pendingCaptureUri by remember { mutableStateOf<Uri?>(null) }
