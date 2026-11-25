@@ -132,6 +132,8 @@ fun GenealogyScreen(
         recordedFledgedCount: Int,
         productionHistoryNotes: String,
         newPhotoBase64: String?,
+        externalSirePhotoBase64: String?,
+        externalDamPhotoBase64: String?,
         onDone: () -> Unit
     ) -> Unit,
     onDeleteCanary: (String) -> Unit,
