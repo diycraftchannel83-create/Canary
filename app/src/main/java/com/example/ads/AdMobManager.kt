@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.os.Handler
+import android.os.Looper
 import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
 import java.util.Date
@@ -44,6 +46,9 @@ object AdMobManager : DefaultLifecycleObserver, Application.ActivityLifecycleCal
     private var appOpenAd: AppOpenAd? = null
     private var isLoadingAppOpenAd = false
     private var appOpenLoadTimeMs = 0L
+    private var appIsForeground = false
+    private var appOpenAttemptedThisForeground = false
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private var rewardedInterstitialAd: RewardedInterstitialAd? = null
     private var isLoadingRewardedInterstitial = false
@@ -129,6 +134,11 @@ object AdMobManager : DefaultLifecycleObserver, Application.ActivityLifecycleCal
                     isLoadingAppOpenAd = false
                     appOpenLoadTimeMs = Date().time
                     Log.d(TAG, "App Open ad loaded")
+                    if (appIsForeground && !appOpenAttemptedThisForeground) {
+                        currentActivityRef?.get()?.let { activity ->
+                            mainHandler.post { showAppOpenAdIfAvailable(activity) }
+                        }
+                    }
                 }
 
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
@@ -141,7 +151,9 @@ object AdMobManager : DefaultLifecycleObserver, Application.ActivityLifecycleCal
     }
 
     fun showAppOpenAdIfAvailable(activity: Activity) {
-        if (isShowingAd) return
+        if (isShowingAd || activity.isFinishing || activity.isDestroyed) return
+        if (!appIsForeground || appOpenAttemptedThisForeground) return
+        appOpenAttemptedThisForeground = true
         if (suppressNextAppOpen) {
             suppressNextAppOpen = false
             return
@@ -150,6 +162,7 @@ object AdMobManager : DefaultLifecycleObserver, Application.ActivityLifecycleCal
         if (ad == null || !wasLoadTimeLessThanNHoursAgo(APP_OPEN_AD_EXPIRY_HOURS)) {
             appOpenAd = null
             loadAppOpenAd(activity.applicationContext)
+            appOpenAttemptedThisForeground = false
             return
         }
 
@@ -261,11 +274,16 @@ object AdMobManager : DefaultLifecycleObserver, Application.ActivityLifecycleCal
     }
 
     override fun onStart(owner: LifecycleOwner) {
+        appIsForeground = true
+        appOpenAttemptedThisForeground = false
         currentActivityRef?.get()?.let { activity ->
-            if (!activity.isFinishing && !activity.isDestroyed) {
-                showAppOpenAdIfAvailable(activity)
-            }
+            if (!activity.isFinishing && !activity.isDestroyed) showAppOpenAdIfAvailable(activity)
         }
+    }
+
+    override fun onStop(owner: LifecycleOwner) {
+        appIsForeground = false
+        appOpenAttemptedThisForeground = false
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
