@@ -146,12 +146,15 @@ jobs:
           retention-days: 14
 
       - name: Upload signed release outputs
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && (hashFiles('app/build/outputs/apk/release/app-release.apk') != '' || hashFiles('app/build/outputs/bundle/release/app-release.aab') != '')
         uses: actions/upload-artifact@v4
         with:
           name: Kenari-Tasikmalaya-release
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
-          if-no-files-found: warn
+          if-no-files-found: ignore
           retention-days: 30
+      - name: Report release build skipped
+        if: github.event_name != 'pull_request' && hashFiles('app/build/outputs/apk/release/app-release.apk') == '' && hashFiles('app/build/outputs/bundle/release/app-release.aab') == ''
+        run: echo "Release outputs absent. Check ANDROID_KEYSTORE_BASE64 and release signing secrets, or review earlier Gradle errors."
