@@ -70,6 +70,9 @@ import com.example.data.model.BreedingPair
 import com.example.data.model.Canary
 import com.example.data.model.CanarySex
 import com.example.data.model.ClutchStatus
+import com.example.data.model.InventoryStatus
+import com.example.data.model.OwnershipStatus
+import com.example.data.model.HealthStatus
 import com.example.data.model.PairStatus
 import com.example.ui.theme.CriticalCrimson
 import com.example.ui.theme.CriticalCrimsonBg
@@ -676,8 +679,9 @@ private fun CreatePairDialog(
     onDismiss: () -> Unit,
     onSubmit: (cageCode: String, sire: Canary, dam: Canary, pairedDateMs: Long, notes: String) -> Unit
 ) {
-    val males = remember(canaries) { canaries.filter { it.sexEnum == CanarySex.MALE } }
-    val females = remember(canaries) { canaries.filter { it.sexEnum == CanarySex.FEMALE } }
+    val eligible = remember(canaries) { canaries.filter { it.ownershipStatusEnum == OwnershipStatus.OWNED && it.inventoryStatusEnum == InventoryStatus.READY && it.healthStatusEnum != HealthStatus.CRITICAL } }
+    val males = remember(eligible) { eligible.filter { it.sexEnum == CanarySex.MALE } }
+    val females = remember(eligible) { eligible.filter { it.sexEnum == CanarySex.FEMALE } }
 
     var cageCode by remember { mutableStateOf("KDG-01") }
     var selectedSire by remember { mutableStateOf(males.firstOrNull()) }
@@ -706,7 +710,7 @@ private fun CreatePairDialog(
             ) {
                 if (males.isEmpty() || females.isEmpty()) {
                     Text(
-                        text = "Pastikan Anda sudah mendaftarkan minimal 1 kenari Jantan dan 1 kenari Betina di tab Silsilah.",
+                        text = "Syarat pilihan: status READY, kepemilikan OWNED, dan kesehatan bukan CRITICAL. Atur status di tab Inventaris. Minimal 1 jantan dan 1 betina yang memenuhi syarat.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -754,6 +758,10 @@ private fun CreatePairDialog(
                     }
                 }
 
+                if (selectedSire != null && selectedDam != null && selectedSire?.id == selectedDam?.id) {
+                    Text("Tidak valid: burung yang sama tidak dapat dipasangkan.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+
                 if (sharedAncestors.isNotEmpty()) {
                     Surface(
                         color = CriticalCrimsonBg,
@@ -797,7 +805,7 @@ private fun CreatePairDialog(
                     val d = selectedDam ?: return@Button
                     onSubmit(cageCode, s, d, pairedDateMs, notes)
                 },
-                enabled = !isBusy && cageCode.isNotBlank() && selectedSire != null && selectedDam != null
+                enabled = !isBusy && cageCode.isNotBlank() && selectedSire != null && selectedDam != null && selectedSire?.id != selectedDam?.id
             ) {
                 Text(if (isBusy) "Menyimpan..." else "Simpan Pasangan")
             }
