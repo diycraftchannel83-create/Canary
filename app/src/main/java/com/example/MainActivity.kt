@@ -27,11 +27,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Egg
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.AccountTree
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Egg
+import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.HealthAndSafety
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AlertDialog
@@ -87,6 +89,7 @@ import com.example.ui.auth.signOutFromApp
 import com.example.ui.screens.BreedingScreen
 import com.example.ui.screens.CareScreen
 import com.example.ui.screens.DashboardScreen
+import com.example.ui.screens.InventoryScreen
 import com.example.ui.screens.GenealogyScreen
 import com.example.ui.screens.TeamAndReportsScreen
 import com.example.ui.theme.KenariPedigreeTheme
@@ -105,7 +108,7 @@ private enum class AppTab(
     val unselectedIcon: ImageVector
 ) {
     DASHBOARD("dashboard", "Dasbor", Icons.Rounded.Dashboard, Icons.Outlined.Dashboard),
-    GENEALOGY("genealogy", "Silsilah", Icons.Rounded.AccountTree, Icons.Outlined.AccountTree),
+    GENEALOGY("genealogy", "Silsilah", Icons.Rounded.AccountTree, Icons.Outlined.AccountTree),\n    INVENTORY("inventory", "Inventaris", Icons.Rounded.Inventory2, Icons.Outlined.Inventory2),
     BREEDING("breeding", "Produksi", Icons.Rounded.Egg, Icons.Outlined.Egg),
     CARE("care", "Perawatan", Icons.Rounded.HealthAndSafety, Icons.Outlined.HealthAndSafety),
     TEAM_REPORTS("team_reports", "Setting", Icons.Rounded.Settings, Icons.Outlined.Settings)
@@ -470,7 +473,7 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                                         )
                                     }
 
-                                    composable(AppTab.BREEDING.route) {
+                                    composable(AppTab.INVENTORY.route) {\n                                        InventoryScreen(data = data)\n                                    }\n\n                                    composable(AppTab.BREEDING.route) {
                                         BreedingScreen(
                                             data = data,
                                             isBusy = isBusy,
