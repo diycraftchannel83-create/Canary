@@ -411,8 +411,8 @@ private fun AuthenticatedAviaryShell(currentUserId: String) {
                                             onSaveFarmSettings = { aviaryId, fName, fAddr, fPhone, onDone ->
                                                 viewModel.updateFarmSettings(aviaryId, fName, fAddr, fPhone, onDone)
                                             },
-                                            onUploadFarmLogo = { aviaryId, imageUri, onDone ->
-                                                viewModel.uploadFarmLogo(aviaryId, imageUri, onDone)
+                                            onUploadFarmLogo = { aviaryId, imageUri, mimeType, onDone ->
+                                                viewModel.uploadFarmLogo(aviaryId, imageUri, mimeType, onDone)
                                             },
                                             onDeleteFarmLogo = { aviaryId, onDone ->
                                                 viewModel.deleteFarmLogo(aviaryId, onDone)
