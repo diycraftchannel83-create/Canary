@@ -444,6 +444,33 @@ class BreedingRepository(
         }
     }
 
+    suspend fun updateCanaryInventoryMetadata(aviaryId: String, canaryId: String, inventoryStatus: String, ownershipStatus: String, ownershipSource: String, acquiredDateEpochMs: Long, previousOwnerName: String, purchasePrice: Long, pedigreeConfidence: String, pedigreeDocumentNotes: String): Result<Unit> {
+        val path = "aviaries/$aviaryId/canaries/$canaryId"
+        return try {
+            require(aviaryId.isNotBlank() && canaryId.isNotBlank())
+            requireUserId()
+            db.collection("aviaries").document(aviaryId).collection("canaries").document(canaryId).update(
+                mapOf(
+                    "inventoryStatus" to inventoryStatus.take(30),
+                    "ownershipStatus" to ownershipStatus.take(30),
+                    "ownershipSource" to ownershipSource.take(30),
+                    "acquiredDateEpochMs" to acquiredDateEpochMs.coerceAtLeast(0L),
+                    "previousOwnerName" to previousOwnerName.trim().take(100),
+                    "purchasePrice" to purchasePrice.coerceAtLeast(0L),
+                    "pedigreeConfidence" to pedigreeConfidence.take(20),
+                    "pedigreeDocumentNotes" to pedigreeDocumentNotes.trim().take(500),
+                    "updatedAt" to FieldValue.serverTimestamp()
+                )
+            ).await()
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            handleFirestoreError(e, OperationType.WRITE, path)
+            Result.failure(e)
+        }
+    }
+
     suspend fun deleteCanary(aviaryId: String, canaryId: String): Result<Unit> {
         val docPath = "aviaries/$aviaryId/canaries/$canaryId"
         return try {
