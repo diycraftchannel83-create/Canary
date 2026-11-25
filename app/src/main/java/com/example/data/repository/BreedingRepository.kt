@@ -15,6 +15,9 @@ import com.example.data.model.CanarySex
 import com.example.data.model.ClutchStatus
 import com.example.data.model.HealthLog
 import com.example.data.model.HealthStatus
+import com.example.data.model.InventoryStatus
+import com.example.data.model.OwnershipStatus
+import com.example.data.model.OwnershipSource
 import com.example.data.model.PairStatus
 import com.example.data.model.SupplementTask
 import com.example.data.model.UserProfile
