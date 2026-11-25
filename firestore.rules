@@ -61,6 +61,7 @@ service cloud.firestore {
              (!('farmName' in data) || (data.farmName is string && data.farmName.size() <= 80)) &&
              (!('farmAddress' in data) || (data.farmAddress is string && data.farmAddress.size() <= 200)) &&
              (!('farmPhone' in data) || (data.farmPhone is string && data.farmPhone.size() <= 30)) &&
+             (!('farmLogoUrl' in data) || (data.farmLogoUrl is string && data.farmLogoUrl.size() <= 2048)) &&
              isValidInviteCode(data.inviteCode) &&
              isValidMemberList(data.memberUids) &&
              isValidLabelList(data.memberLabels);
@@ -237,7 +238,7 @@ service cloud.firestore {
                        request.auth.uid in incoming().memberUids &&
                        incoming().memberUids.size() == 1 &&
                        incoming().keys().hasAll(['ownerId', 'name', 'inviteCode', 'memberUids', 'memberLabels', 'createdAt', 'updatedAt']) &&
-                       incoming().keys().hasOnly(['ownerId', 'name', 'farmName', 'farmAddress', 'farmPhone', 'inviteCode', 'memberUids', 'memberLabels', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['ownerId', 'name', 'farmName', 'farmAddress', 'farmPhone', 'farmLogoUrl', 'inviteCode', 'memberUids', 'memberLabels', 'createdAt', 'updatedAt']) &&
                        isValidTimestamp(incoming().createdAt) &&
                        isValidTimestamp(incoming().updatedAt) &&
                        isValidAviary(incoming());
@@ -251,12 +252,12 @@ service cloud.firestore {
                          (
                            existing().ownerId == request.auth.uid &&
                            request.auth.uid in incoming().memberUids &&
-                           incoming().diff(existing()).affectedKeys().hasOnly(['name', 'farmName', 'farmAddress', 'farmPhone', 'inviteCode', 'memberUids', 'memberLabels', 'updatedAt'])
+                           incoming().diff(existing()).affectedKeys().hasOnly(['name', 'farmName', 'farmAddress', 'farmPhone', 'farmLogoUrl', 'inviteCode', 'memberUids', 'memberLabels', 'updatedAt'])
                          ) ||
                          // Action 1b: Team member updates farm settings
                          (
                            request.auth.uid in existing().memberUids &&
-                           incoming().diff(existing()).affectedKeys().hasOnly(['farmName', 'farmAddress', 'farmPhone', 'updatedAt'])
+                           incoming().diff(existing()).affectedKeys().hasOnly(['farmName', 'farmAddress', 'farmPhone', 'farmLogoUrl', 'updatedAt'])
                          ) ||
                          // Action 2: Authenticated user joins via verified invite code
                          (
