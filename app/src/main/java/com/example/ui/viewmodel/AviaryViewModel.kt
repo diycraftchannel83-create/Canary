@@ -100,7 +100,8 @@ class AviaryViewModel(
             old?.name == new?.name &&
             old?.farmName == new?.farmName &&
             old?.farmAddress == new?.farmAddress &&
-            old?.farmPhone == new?.farmPhone
+            old?.farmPhone == new?.farmPhone &&
+            old?.farmLogoUrl == new?.farmLogoUrl
     }
 
     val dashboardState: StateFlow<UiState<AviaryDashboardData>> = activeAviaryFlow
