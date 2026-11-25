@@ -53,23 +53,42 @@ jobs:
             echo "Firebase config secret missing; app will show setup guidance instead of crashing."
           fi
 
+      - name: Restore persistent CI debug keystore
+        env:
+          CI_DEBUG_KEYSTORE_BASE64: ${{ secrets.CI_DEBUG_KEYSTORE_BASE64 }}
+          CI_DEBUG_KEYSTORE_PASSWORD: ${{ secrets.CI_DEBUG_KEYSTORE_PASSWORD }}
+          CI_DEBUG_KEY_ALIAS: ${{ secrets.CI_DEBUG_KEY_ALIAS }}
+          CI_DEBUG_KEY_PASSWORD: ${{ secrets.CI_DEBUG_KEY_PASSWORD }}
+        run: |
+          if [ -z "$CI_DEBUG_KEYSTORE_BASE64" ] || [ -z "$CI_DEBUG_KEYSTORE_PASSWORD" ] || [ -z "$CI_DEBUG_KEY_ALIAS" ] || [ -z "$CI_DEBUG_KEY_PASSWORD" ]; then
+            echo "Persistent CI debug signing secrets missing; build will use runner debug keystore."
+          else
+            mkdir -p "$RUNNER_TEMP/ci-keystore"
+            echo "$CI_DEBUG_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/ci-keystore/canary-debug.keystore"
+            echo "CI_DEBUG_KEYSTORE_PATH=$RUNNER_TEMP/ci-keystore/canary-debug.keystore" >> "$GITHUB_ENV"
+            echo "CI_DEBUG_KEYSTORE_PASSWORD=$CI_DEBUG_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "CI_DEBUG_KEY_ALIAS=$CI_DEBUG_KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "CI_DEBUG_KEY_PASSWORD=$CI_DEBUG_KEY_PASSWORD" >> "$GITHUB_ENV"
+          fi
+
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
 
       - name: Print CI debug keystore SHA-1 and SHA-256
+        env:
+          CI_DEBUG_KEYSTORE_PATH: ${{ env.CI_DEBUG_KEYSTORE_PATH }}
+          CI_DEBUG_KEYSTORE_PASSWORD: ${{ secrets.CI_DEBUG_KEYSTORE_PASSWORD }}
+          CI_DEBUG_KEY_ALIAS: ${{ secrets.CI_DEBUG_KEY_ALIAS }}
         run: |
-          DEBUG_KEYSTORE="$HOME/.config/.android/debug.keystore"
-          if [ ! -f "$DEBUG_KEYSTORE" ]; then
+          if [ -n "$CI_DEBUG_KEYSTORE_PATH" ] && [ -f "$CI_DEBUG_KEYSTORE_PATH" ]; then
+            keytool -list -v -keystore "$CI_DEBUG_KEYSTORE_PATH" -storepass "$CI_DEBUG_KEYSTORE_PASSWORD" -alias "$CI_DEBUG_KEY_ALIAS" | grep -E "SHA1:|SHA256:"
+            echo "Fingerprint belongs to persistent CI debug signing certificate."
+          else
             DEBUG_KEYSTORE="$(find "$HOME" -type f -name debug.keystore 2>/dev/null | head -n 1)"
+            if [ -z "$DEBUG_KEYSTORE" ] || [ ! -f "$DEBUG_KEYSTORE" ]; then echo "ERROR: No debug keystore found."; exit 1; fi
+            keytool -list -v -keystore "$DEBUG_KEYSTORE" -storepass android -alias androiddebugkey | grep -E "SHA1:|SHA256:"
+            echo "WARNING: runner-generated debug keystore fingerprint; not stable."
           fi
-          if [ -z "$DEBUG_KEYSTORE" ] || [ ! -f "$DEBUG_KEYSTORE" ]; then
-            echo "ERROR: Cannot locate CI debug keystore under HOME."
-            find "$HOME" -type f -name "*.keystore" -o -name "*.jks" 2>/dev/null || true
-            exit 1
-          fi
-          echo "Using CI debug keystore: $DEBUG_KEYSTORE"
-          keytool -list -v -keystore "$DEBUG_KEYSTORE" -storepass android -alias androiddebugkey | grep -E "SHA1:|SHA256:"
-          echo "NOTE: This fingerprint belongs to the runner-generated debug keystore for this workflow run."
 
       - name: Run unit tests (retry transient Maven failures)
         run: |
