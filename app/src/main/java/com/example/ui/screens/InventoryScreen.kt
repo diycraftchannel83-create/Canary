@@ -30,7 +30,8 @@ fun InventoryScreen(data: AviaryDashboardData, isBusy: Boolean, onUpdateMetadata
     var query by remember { mutableStateOf("") }
     var statusFilter by remember { mutableStateOf<InventoryStatus?>(null) }
     var ownershipFilter by remember { mutableStateOf<OwnershipStatus?>(null) }
-    var editBird by remember { mutableStateOf<Canary?>(null) }\n    var showAddDialog by remember { mutableStateOf(false) }
+    var editBird by remember { mutableStateOf<Canary?>(null) }
+    var showAddDialog by remember { mutableStateOf(false) }
     val birds = remember(data.canaries, query, statusFilter, ownershipFilter) {
         data.canaries.filter { bird ->
             val q = query.trim().lowercase()
@@ -43,7 +44,8 @@ fun InventoryScreen(data: AviaryDashboardData, isBusy: Boolean, onUpdateMetadata
     }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {\n                Text("Inventaris Burung", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)\n                Button(onClick = { showAddDialog = true }) { Text("Tambah") }\n            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Inventaris Burung", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)\n                Button(onClick = { showAddDialog = true }) { Text("Tambah") }\n            }
             Text("Kelola burung aviary, status kesiapan, asal, kepemilikan, dan pedigree.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 InventoryMetric("Total", data.canaries.size.toString(), Modifier.weight(1f))
@@ -76,7 +78,8 @@ fun InventoryScreen(data: AviaryDashboardData, isBusy: Boolean, onUpdateMetadata
             }
         }
     }
-    if (showAddDialog) {\n        AddInventoryBirdDialog(busy = isBusy, onDismiss = { showAddDialog = false }, onCreate = { ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, notes ->\n            onCreateBird(ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, notes)\n            showAddDialog = false\n        })\n    }\n    editBird?.let { bird ->
+    if (showAddDialog) {
+        AddInventoryBirdDialog(busy = isBusy, onDismiss = { showAddDialog = false }, onCreate = { ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, notes ->\n            onCreateBird(ring, name, sex, breed, color, hatchMs, cage, status, ownership, source, acquiredMs, owner, price, confidence, sireRing, damRing, lineage, notes)\n            showAddDialog = false\n        })\n    }\n    editBird?.let { bird ->
         InventoryEditDialog(bird = bird, busy = isBusy, onDismiss = { editBird = null }, onSave = { status, ownership, source, dateMs, owner, price, confidence, notes ->
             onUpdateMetadata(bird, status, ownership, source, dateMs, owner, price, confidence, notes)
             editBird = null
