@@ -1,5 +1,13 @@
 package com.example.ui.screens
 
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -98,6 +106,35 @@ fun DashboardScreen(
     onSignOut: () -> Unit
 ) {
     var showFarmSettingsDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val farmLogoPrefs = remember(context) {
+        context.getSharedPreferences("farm_profile_local", android.content.Context.MODE_PRIVATE)
+    }
+    var farmLogoUriString by remember {
+        mutableStateOf(farmLogoPrefs.getString("farm_logo_uri", null))
+    }
+    val farmLogoPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) { /* GetContent grants temporary access; persisted access may not be supported. */ }
+            farmLogoUriString = uri.toString()
+            farmLogoPrefs.edit().putString("farm_logo_uri", uri.toString()).apply()
+        }
+    }
+    val farmLogoBitmap = remember(farmLogoUriString) {
+        try {
+            farmLogoUriString?.let { uriString ->
+                context.contentResolver.openInputStream(Uri.parse(uriString))?.use {
+                    BitmapFactory.decodeStream(it)?.asImageBitmap()
+                }
+            }
+        } catch (_: Exception) { null }
+    }
     val activeIncubations = data.clutches.filter {
         it.statusEnum == ClutchStatus.INCUBATING && (it.incubationStartEpochMs ?: 0L) > 0L
     }
@@ -232,14 +269,30 @@ fun DashboardScreen(
                             if (farmTitle.isNotBlank()) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Storefront,
-                                        contentDescription = null,
-                                        tint = CanaryGold,
-                                        modifier = Modifier.size(15.dp)
-                                    )
+                                    if (farmLogoBitmap != null) {
+                                        Image(
+                                            bitmap = farmLogoBitmap,
+                                            contentDescription = "Logo $farmTitle",
+                                            modifier = Modifier.size(46.dp).clip(CircleShape)
+                                        )
+                                    } else {
+                                        Surface(
+                                            color = Color.White.copy(alpha = 0.16f),
+                                            shape = CircleShape,
+                                            modifier = Modifier.size(46.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Storefront,
+                                                    contentDescription = "Logo default farm",
+                                                    tint = CanaryGold,
+                                                    modifier = Modifier.size(25.dp)
+                                                )
+                                            }
+                                        }
+                                    }
                                     Text(
                                         text = farmTitle,
                                         style = MaterialTheme.typography.titleSmall,
@@ -665,6 +718,42 @@ fun DashboardScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (farmLogoBitmap != null) {
+                            Image(
+                                bitmap = farmLogoBitmap,
+                                contentDescription = "Logo farm saat ini",
+                                modifier = Modifier.size(64.dp).clip(CircleShape)
+                            )
+                        } else {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                modifier = Modifier.size(64.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Rounded.Storefront, contentDescription = "Logo default", modifier = Modifier.size(30.dp))
+                                }
+                            }
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Button(onClick = { farmLogoPicker.launch("image/*") }) {
+                                Text(if (farmLogoBitmap == null) "Pilih Logo Farm" else "Ganti Logo")
+                            }
+                            if (farmLogoUriString != null) {
+                                TextButton(onClick = {
+                                    farmLogoUriString = null
+                                    farmLogoPrefs.edit().remove("farm_logo_uri").apply()
+                                }) {
+                                    Text("Hapus Logo")
+                                }
+                            }
+                        }
+                    }
                     OutlinedTextField(
                         value = farmName,
                         onValueChange = { farmName = it },
