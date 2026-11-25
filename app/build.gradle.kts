@@ -31,7 +31,7 @@ android {
       }
     }
     manifestPlaceholders["ADMOB_APP_ID"] = envProps
-      .getProperty("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+      .getProperty("ADMOB_APP_ID", "ca-app-pub-1254774552944426~7676108719")
       .trim()
       .trim('"')
   }
