@@ -106,7 +106,7 @@ jobs:
           echo "Unit tests failed after 3 attempts."
           exit 1
 
-      - name: Decode Android release keystore
+      - name: Decode and validate Android release keystore
         if: github.event_name != 'pull_request'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -114,13 +114,18 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
         run: |
+          set -e
           if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ] || [ -z "$ANDROID_STORE_PASSWORD" ]; then
-            echo "Release signing secrets incomplete; skipping release build."
-            exit 0
+            echo "::error::Release signing secrets are incomplete."
+            exit 1
           fi
           mkdir -p "$RUNNER_TEMP/keystore"
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/keystore/kenari-release-key.jks"
-          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/keystore/kenari-release-key.jks" >> "$GITHUB_ENV"
+          KEYSTORE_FILE="$RUNNER_TEMP/keystore/kenari-release-key.jks"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_FILE"
+          if [ ! -s "$KEYSTORE_FILE" ]; then echo "::error::Decoded release keystore is empty."; exit 1; fi
+          keytool -list -keystore "$KEYSTORE_FILE" -storepass "$ANDROID_STORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null
+          echo "ANDROID_KEYSTORE_PATH=$KEYSTORE_FILE" >> "$GITHUB_ENV"
+          echo "Release keystore decoded and validated."
 
       - name: Build signed release APK and AAB
         if: github.event_name != 'pull_request'
@@ -128,12 +133,10 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
-          ANDROID_KEYSTORE_PATH: $RUNNER_TEMP/keystore/kenari-release-key.jks
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/keystore/kenari-release-key.jks
         run: |
-          if [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ] || [ -z "$ANDROID_STORE_PASSWORD" ] || [ ! -f "$ANDROID_KEYSTORE_PATH" ]; then
-            echo "Release signing secrets or keystore unavailable; release build skipped."
-            exit 0
-          fi
+          set -e
+          if [ ! -f "$ANDROID_KEYSTORE_PATH" ]; then echo "::error::Release keystore file missing at configured path."; exit 1; fi
           gradle assembleRelease bundleRelease --stacktrace
 
       - name: Upload debug APK
