@@ -444,6 +444,69 @@ class BreedingRepository(
         }
     }
 
+    suspend fun createInventoryCanary(
+        aviaryId: String,
+        memberUids: List<String>,
+        ringCode: String,
+        name: String,
+        sex: CanarySex,
+        breed: String,
+        featherColor: String,
+        hatchDateEpochMs: Long,
+        cageCode: String,
+        inventoryStatus: InventoryStatus,
+        ownershipStatus: OwnershipStatus,
+        ownershipSource: OwnershipSource,
+        acquiredDateEpochMs: Long,
+        previousOwnerName: String,
+        purchasePrice: Long,
+        pedigreeConfidence: String,
+        sireRing: String,
+        damRing: String,
+        lineageNotes: String,
+        pedigreeDocumentNotes: String
+    ): Result<Unit> {
+        val path = "aviaries/$aviaryId/canaries"
+        return try {
+            val uid = requireUserId()
+            require(aviaryId.isNotBlank()) { "Aviary belum dipilih" }
+            require(ringCode.isNotBlank()) { "Kode ring wajib diisi" }
+            require(name.isNotBlank()) { "Nama burung wajib diisi" }
+            require(breed.isNotBlank()) { "Ras/strain wajib diisi" }
+            val ref = db.collection("aviaries").document(aviaryId).collection("canaries").document()
+            val bird = Canary(
+                aviaryId = aviaryId,
+                userId = uid,
+                memberUids = (memberUids + uid).distinct().take(20),
+                ringCode = ringCode.trim(),
+                name = name.trim(),
+                sex = sex.name,
+                breed = breed.trim(),
+                featherColor = featherColor.trim(),
+                hatchDateEpochMs = hatchDateEpochMs.coerceAtLeast(0L),
+                sireRing = sireRing.trim().takeIf { it.isNotBlank() },
+                damRing = damRing.trim().takeIf { it.isNotBlank() },
+                cageCode = cageCode.trim(),
+                inventoryStatus = inventoryStatus.name,
+                ownershipStatus = ownershipStatus.name,
+                ownershipSource = ownershipSource.name,
+                acquiredDateEpochMs = acquiredDateEpochMs.coerceAtLeast(0L),
+                previousOwnerName = previousOwnerName.trim(),
+                purchasePrice = purchasePrice.coerceAtLeast(0L),
+                pedigreeConfidence = pedigreeConfidence,
+                lineageNotes = lineageNotes.trim(),
+                pedigreeDocumentNotes = pedigreeDocumentNotes.trim()
+            )
+            ref.set(bird.toCreateMap()).await()
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            handleFirestoreError(e, OperationType.WRITE, path)
+            Result.failure(e)
+        }
+    }
+
     suspend fun updateCanaryInventoryMetadata(aviaryId: String, canaryId: String, inventoryStatus: String, ownershipStatus: String, ownershipSource: String, acquiredDateEpochMs: Long, previousOwnerName: String, purchasePrice: Long, pedigreeConfidence: String, pedigreeDocumentNotes: String): Result<Unit> {
         val path = "aviaries/$aviaryId/canaries/$canaryId"
         return try {
