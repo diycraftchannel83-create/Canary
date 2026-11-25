@@ -38,10 +38,6 @@ fun KenariAdaptiveBanner(modifier: Modifier = Modifier) {
                     setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, widthDp))
                     loadAd(AdRequest.Builder().build())
                 }
-            },
-            update = { view ->
-                if (view.adUnitId != adUnitId) view.adUnitId = adUnitId
-            }
-        )
+            },)
     }
 }
