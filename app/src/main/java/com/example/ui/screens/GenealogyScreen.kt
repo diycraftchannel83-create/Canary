@@ -862,111 +862,6 @@ private fun CanaryFormDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Camera Photo Section (Immutable once uploaded)
-                Text("Foto Indukan Asli (Kamera)", style = MaterialTheme.typography.labelMedium)
-                if (alreadyUploadedPhoto && uploadedPhotoBitmap != null) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Image(
-                                bitmap = uploadedPhotoBitmap,
-                                contentDescription = "Foto indukan asli terkunci",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(72.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                            )
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Lock,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Text(
-                                        text = "Foto Terkunci Permanen",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Text(
-                                    text = "Foto indukan asli yang sudah diupload tidak dapat diedit atau dihapus.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    if (pendingPreviewBitmap != null) {
-                        Image(
-                            bitmap = pendingPreviewBitmap,
-                            contentDescription = "Pratinjau foto kamera indukan",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                        )
-                        Text(
-                            text = "Pastikan indukan terlihat jelas. Setelah menekan Simpan, foto terkunci permanen dan tidak bisa diubah atau dihapus.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    } else {
-                        Text(
-                            text = "Ambil foto langsung dari kamera untuk merekam keaslian indukan jantan/betina. Foto yang sudah diupload tidak dapat diedit atau dihapus.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            val granted = ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.CAMERA
-                            ) == PackageManager.PERMISSION_GRANTED
-                            if (granted) {
-                                launchCameraCapture()
-                            } else {
-                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("capture_canary_photo_btn")
-                    ) {
-                        Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (pendingPreviewBitmap == null) "Ambil Foto Indukan (Kamera)" else "Foto Ulang Sebelum Upload")
-                    }
-
-                    cameraError?.let { err ->
-                        Text(
-                            text = err,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
                 OutlinedTextField(
                     value = ringCode,
                     onValueChange = { ringCode = it },
@@ -975,15 +870,6 @@ private fun CanaryFormDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag("canary_ring_input")
                 )
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nama Kenari *") },
-                    placeholder = { Text("Contoh: Surya Gold") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().testTag("canary_name_input")
-                )
-
                 Text("Jenis Kelamin", style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     CanarySex.entries.forEach { option ->
@@ -1003,23 +889,6 @@ private fun CanaryFormDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = featherColor,
-                        onValueChange = { featherColor = it },
-                        label = { Text("Warna Bulu") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = cageCode,
-                        onValueChange = { cageCode = it },
-                        label = { Text("Kandang") },
-                        singleLine = true,
-                        modifier = Modifier.weight(0.8f)
-                    )
-                }
-
                 OutlinedButton(
                     onClick = { showDatePicker = true },
                     modifier = Modifier.fillMaxWidth()
@@ -1107,105 +976,6 @@ private fun CanaryFormDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-
-                OutlinedTextField(
-                    value = lineageNotes,
-                    onValueChange = { lineageNotes = it },
-                    label = { Text("Catatan Silsilah / Jalur Trah") },
-                    placeholder = { Text("Contoh: Trah F1 Yorkshire impor, garis juara...") },
-                    maxLines = 2,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("canary_lineage_notes_input")
-                )
-
-                Text("Riwayat Produksi Indukan", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = recordedClutchText,
-                        onValueChange = { recordedClutchText = it.filter { ch -> ch.isDigit() }.take(3) },
-                        label = { Text("Periode / Clutch") },
-                        placeholder = { Text("0") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("canary_clutch_count_input")
-                    )
-                    OutlinedTextField(
-                        value = recordedEggText,
-                        onValueChange = { recordedEggText = it.filter { ch -> ch.isDigit() }.take(4) },
-                        label = { Text("Total Telur") },
-                        placeholder = { Text("0") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("canary_egg_count_input")
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = recordedHatchedText,
-                        onValueChange = { recordedHatchedText = it.filter { ch -> ch.isDigit() }.take(4) },
-                        label = { Text("Menetas") },
-                        placeholder = { Text("0") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("canary_hatched_count_input")
-                    )
-                    OutlinedTextField(
-                        value = recordedFledgedText,
-                        onValueChange = { recordedFledgedText = it.filter { ch -> ch.isDigit() }.take(4) },
-                        label = { Text("Mandiri") },
-                        placeholder = { Text("0") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("canary_fledged_count_input")
-                    )
-                }
-                OutlinedTextField(
-                    value = productionHistoryNotes,
-                    onValueChange = { productionHistoryNotes = it },
-                    label = { Text("Catatan Riwayat Produksi") },
-                    placeholder = { Text("Contoh: Produktif meloloh, rata-rata 4 telur/periode...") },
-                    maxLines = 3,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("canary_production_notes_input")
-                )
-
-                Text("Status Breeding", style = MaterialTheme.typography.labelMedium)
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    BreedingStatus.entries.forEach { st ->
-                        FilterChip(
-                            selected = breedingStatus == st,
-                            onClick = { breedingStatus = st },
-                            label = { Text(st.labelId) }
-                        )
-                    }
-                }
-
-                Text("Skor Kesehatan Awal: $healthScore / 100", style = MaterialTheme.typography.labelMedium)
-                Slider(
-                    value = healthScore.toFloat(),
-                    onValueChange = {
-                        healthScore = it.roundToInt()
-                        healthStatus = when {
-                            healthScore >= 75 -> HealthStatus.HEALTHY
-                            healthScore >= 55 -> HealthStatus.MONITORING
-                            else -> HealthStatus.CRITICAL
-                        }
-                    },
-                    valueRange = 0f..100f
-                )
 
                 OutlinedTextField(
                     value = notes,
